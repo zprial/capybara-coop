@@ -1,12 +1,12 @@
 {
-  "name": "capybara-coop-server",
+  "name": "capybara-coop",
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Capybara Co-op: static host + same-origin WebSocket relay, zero dependencies",
+  "description": "Capybara Co-op: single-file game + same-origin WebSocket relay, zero dependencies",
   "scripts": {
     "start": "node server.mjs",
-    "dev": "HOST=127.0.0.1 PORT=8787 node server.mjs"
+    "dev": "HOST=127.0.0.1 PORT=31118 node server.mjs"
   },
   "engines": {
     "node": ">=20"

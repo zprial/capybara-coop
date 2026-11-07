@@ -7,7 +7,7 @@
  *   · /healthz 健康检查
  *
  * 环境变量：
- *   PORT        HTTP 端口，默认 8080
+ *   PORT        HTTP 端口，默认 31118
  *   HOST        监听地址，默认 0.0.0.0（Docker 内必须）；本地调试可设 127.0.0.1
  *   RELAY_PATH  WebSocket 路径，默认 /relay
  *   MAX_FRAME   单帧上限（字节），默认 2 MiB
@@ -19,7 +19,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
-const PORT = Number(process.env.PORT || 8080);
+const PORT = Number(process.env.PORT || 31118);
 const HOST = process.env.HOST || '0.0.0.0';
 const RELAY_PATH = process.env.RELAY_PATH || '/relay';
 const MAX_FRAME = Number(process.env.MAX_FRAME || 2 * 1024 * 1024);
