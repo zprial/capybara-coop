@@ -1,0 +1,2960 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+<title>水豚双舟 · 夕照浅海合作射击</title>
+<!--CAPY_RELAY_CONFIG-->
+<style>
+  :root{
+    --ink:#12232b; --cream:#fff4e2; --sun:#ffab5e; --sun2:#ff7851;
+    --sea:#2fa89c; --panel:rgba(14,36,44,.78); --line:rgba(255,225,190,.18);
+    --p1:#ffb15c; --p2:#6fd6ff; --bad:#ff6b6b; --good:#8ce8b0;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;overflow:hidden;background:#10242c;color:var(--cream);
+    font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;user-select:none}
+  #app{position:fixed;inset:0}
+  canvas{display:block;cursor:none}
+  #hud{position:fixed;inset:0;pointer-events:none;z-index:5}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    backdrop-filter:blur(10px);box-shadow:0 8px 30px rgba(0,0,0,.28)}
+  #team{position:absolute;left:18px;top:18px;width:246px;padding:12px 14px}
+  .pcard{display:flex;gap:10px;align-items:center;padding:6px 0}
+  .pcard+.pcard{border-top:1px solid var(--line);margin-top:4px;padding-top:10px}
+  .avatar{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;font-size:21px;flex:none;
+    background:rgba(255,255,255,.08);border:1px solid var(--line)}
+  .pinfo{flex:1;min-width:0}
+  .pname{font-size:12px;font-weight:700;letter-spacing:.5px;display:flex;justify-content:space-between}
+  .pname span:last-child{opacity:.6;font-weight:400;font-size:11px}
+  .hearts{font-size:15px;letter-spacing:2px;margin-top:3px;line-height:1}
+  .hearts .off{opacity:.22}
+  .wp{font-size:11px;opacity:.72;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .downed{color:var(--bad);font-weight:700}
+  #centerTop{position:absolute;top:18px;left:50%;transform:translateX(-50%);text-align:center;width:340px}
+  #wavePill{display:inline-flex;gap:14px;align-items:center;padding:9px 18px;font-size:12px;letter-spacing:.4px}
+  #wavePill b{font-size:16px;color:var(--sun)}
+  #bossWrap{margin-top:10px;padding:10px 14px;display:none}
+  .barTitle{font-size:11px;letter-spacing:2px;margin-bottom:6px;color:#ffcf9c}
+  .bar{height:9px;border-radius:6px;background:rgba(0,0,0,.45);overflow:hidden}
+  .bar>i{display:block;height:100%;width:100%;border-radius:6px;
+    background:linear-gradient(90deg,#ff5e5e,#ffab5e);transition:width .18s}
+  #net{position:absolute;right:18px;top:18px;width:212px;padding:12px 14px;font-size:11px;line-height:1.8}
+  #net h4{margin:0 0 6px;font-size:11px;letter-spacing:2px;color:var(--sun)}
+  .kv{display:flex;justify-content:space-between;opacity:.86}
+  .kv b{color:#bff3e2;font-weight:600}
+  #net .tag{display:inline-block;padding:1px 7px;border-radius:6px;background:rgba(140,232,176,.16);
+    color:var(--good);font-size:10px;margin-bottom:6px}
+  input[type=range]{width:100%;accent-color:var(--sun);height:14px}
+  .btn{pointer-events:auto;cursor:pointer;border:1px solid var(--line);background:rgba(255,255,255,.08);
+    color:var(--cream);border-radius:9px;padding:6px 12px;font-size:12px;font-family:inherit;transition:.15s}
+  .btn:hover{background:rgba(255,171,94,.24);border-color:var(--sun)}
+  .btn.primary{background:linear-gradient(135deg,var(--sun),var(--sun2));color:#2a1608;border:0;font-weight:800}
+  .btn.primary:hover{filter:brightness(1.1)}
+  .tiny{font-size:10px;opacity:.55;margin-top:6px;line-height:1.5}
+  #explore{position:absolute;left:18px;top:150px;width:246px;padding:10px 14px;font-size:11px;line-height:1.7}
+  #explore .rw{display:flex;justify-content:space-between;opacity:.85}
+  #explore b{color:var(--sun);font-weight:700}
+  #expBar{height:6px;border-radius:4px;background:rgba(0,0,0,.42);overflow:hidden;margin:5px 0 7px}
+  #expBar>i{display:block;height:100%;width:0;border-radius:4px;
+    background:linear-gradient(90deg,#7fe3c0,#ffd277);transition:width .3s}
+  #buffs{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
+  .buff{padding:2px 7px;border-radius:6px;background:rgba(140,232,176,.18);
+    color:#bff3e2;font-size:10px;border:1px solid rgba(140,232,176,.25)}
+  #eventBanner{position:absolute;left:18px;top:288px;width:246px;
+    display:none;padding:8px 14px;text-align:left;font-size:11px}
+  #eventBanner b{color:var(--sun);font-size:13px;letter-spacing:1px;display:block}
+  #eventBanner span{display:block;font-size:10px;opacity:.75;margin-top:3px}
+  #mapBox{position:absolute;left:18px;bottom:18px;padding:10px}
+  #mapBox canvas{display:block;border-radius:9px;cursor:default}
+  #mapBox .cap{font-size:10px;letter-spacing:2px;opacity:.6;margin-bottom:6px;text-align:center}
+  #coins{position:absolute;right:18px;bottom:18px;padding:12px 16px;font-size:13px;text-align:right}
+  #coins b{font-size:24px;color:#ffd98a}
+  #coins .k{font-size:11px;opacity:.7;margin-top:2px}
+  #hint{position:absolute;bottom:22px;left:50%;transform:translateX(-50%);text-align:center;font-size:12px;
+    padding:9px 18px;max-width:620px;line-height:1.7}
+  #hint kbd{background:rgba(255,255,255,.14);border:1px solid var(--line);border-radius:5px;
+    padding:1px 6px;font-family:inherit;font-size:11px;margin:0 2px}
+  #prompt{color:var(--sun);font-weight:800;display:none}
+  #toasts{position:absolute;top:100px;left:50%;transform:translateX(-50%);display:flex;
+    flex-direction:column;align-items:center;gap:8px}
+  .toast{padding:8px 18px;border-radius:30px;background:rgba(14,36,44,.88);border:1px solid var(--line);
+    font-size:13px;animation:pop .3s ease;white-space:nowrap}
+  .toast.hot{color:#ffd08a;border-color:rgba(255,171,94,.5)}
+  @keyframes pop{from{opacity:0;transform:translateY(-10px) scale(.94)}to{opacity:1;transform:none}}
+  .overlay{position:fixed;inset:0;z-index:20;display:grid;place-items:center;
+    background:radial-gradient(ellipse at 50% 30%,rgba(255,150,90,.16),rgba(6,20,26,.94) 70%);
+    backdrop-filter:blur(6px)}
+  .card{width:min(720px,92vw);max-height:92vh;overflow:auto;padding:34px 38px;text-align:center}
+  .card h1{font-size:40px;margin:0 0 6px;letter-spacing:4px;
+    background:linear-gradient(120deg,#ffe3b0,#ff9560,#8fe3d0);-webkit-background-clip:text;
+    background-clip:text;color:transparent}
+  .card .sub{font-size:13px;opacity:.7;letter-spacing:2px;margin-bottom:24px}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;text-align:left;margin:20px 0}
+  .feat{padding:13px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid var(--line)}
+  .feat b{display:block;color:var(--sun);font-size:13px;margin-bottom:5px}
+  .feat span{font-size:11px;opacity:.72;line-height:1.6;display:block}
+  .row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:18px}
+  .field{display:flex;gap:8px;align-items:center;justify-content:center;margin-top:16px;font-size:11px;opacity:.8;flex-wrap:wrap}
+  input[type=text]{background:rgba(0,0,0,.3);border:1px solid var(--line);color:var(--cream);
+    border-radius:8px;padding:7px 10px;font-family:inherit;font-size:12px;outline:none}
+  input[type=text]:focus{border-color:var(--sun)}
+  .note{font-size:11px;opacity:.55;line-height:1.8;margin-top:20px;text-align:left;
+    border-top:1px solid var(--line);padding-top:14px}
+  #shop{position:fixed;z-index:15;left:50%;top:50%;transform:translate(-50%,-50%);
+    width:min(690px,94vw);padding:20px 22px;display:none;pointer-events:auto}
+  #shop h3{margin:0 0 4px;font-size:20px;letter-spacing:2px}
+  #shop .shSub{font-size:11px;opacity:.65;margin-bottom:14px}
+  #shopList{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+  .item{display:flex;gap:11px;align-items:center;padding:10px;border-radius:11px;
+    background:rgba(255,255,255,.05);border:1px solid var(--line);cursor:pointer;transition:.15s}
+  .item:hover{background:rgba(255,171,94,.14);border-color:rgba(255,171,94,.5)}
+  .item:active{transform:scale(.975);background:rgba(255,171,94,.34)}
+  .item.no{opacity:.55;cursor:pointer}
+  .item.owned{border-color:rgba(140,232,176,.55);background:rgba(140,232,176,.10)}
+  .item .ic{font-size:19px;width:34px;text-align:center;color:var(--sun)}
+  .item .tx{flex:1;min-width:0}
+  .item .tx b{font-size:13px;display:block}
+  .item .tx span{font-size:10px;opacity:.65;display:block;margin-top:2px}
+  .item .pr{font-size:13px;color:#ffd98a;font-weight:800;white-space:nowrap}
+  #shopClose{margin-top:14px}
+  #waitList{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:18px 0;text-align:left}
+  .member{display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:10px;
+    background:rgba(255,255,255,.05);border:1px solid var(--line);font-size:12px}
+  .member .dot{width:11px;height:11px;border-radius:50%;flex:none;box-shadow:0 0 8px currentColor}
+  .member b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+  .member span:last-child{font-size:10px;opacity:.66;white-space:nowrap}
+  #waitHint{font-size:11px;opacity:.65;line-height:1.7;margin-top:16px;
+    border-top:1px solid var(--line);padding-top:12px;text-align:left}
+  #end .stats{display:flex;gap:26px;justify-content:center;margin:18px 0;font-size:13px}
+  #end .stats b{display:block;font-size:24px;color:var(--sun)}
+  .hidden{display:none !important}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<div id="hud">
+  <div id="team" class="panel"></div>
+  <div id="explore" class="panel">
+    <div class="rw"><span>🧭 探索度</span><b id="expPct">0%</b></div>
+    <div id="expBar"><i id="expFill"></i></div>
+    <div class="rw"><span>◆ 深渊符文</span><b id="runeNum">0 / 3</b></div>
+    <div class="rw"><span>▣ 未知线索</span><b id="clueTxt">扫描中…</b></div>
+    <div id="buffs"></div>
+  </div>
+  <div id="eventBanner" class="panel"><b id="evName"></b><span id="evDesc"></span></div>
+  <div id="centerTop">
+    <div id="wavePill" class="panel"><span>第 <b id="waveNum">1</b> 波</span><span>生存 <b id="timer">00:00</b></span><span id="merchantInfo">商船 32s</span></div>
+    <div id="bossWrap" class="panel"><div class="barTitle">深渊巨兽 · ABYSSAL MAW</div><div class="bar"><i id="bossBar"></i></div></div>
+  </div>
+  <div id="net" class="panel">
+    <h4>NETWORK / 60Hz</h4>
+    <div class="tag" id="roleTag">SOLO · AI 队友</div>
+    <div class="kv"><span>权威 Tick</span><b id="nTick">0</b></div>
+    <div class="kv"><span>快照频率</span><b id="nSnap">20 Hz</b></div>
+    <div class="kv"><span>输入上行</span><b id="nIn">60 Hz</b></div>
+    <div class="kv"><span>往返延迟</span><b id="nRtt">0 ms</b></div>
+    <div class="kv"><span>和解误差</span><b id="nErr">0.00 m</b></div>
+    <div style="margin-top:6px">模拟延迟 <span id="latVal">30</span> ms</div>
+    <input id="lat" type="range" min="0" max="160" value="30" />
+    <button class="btn" id="fastBtn" style="width:100%;margin-top:6px;padding:4px">⏩ 快进 30 秒</button>
+    <div class="tiny">固定步长 1/60s 权威模拟 · 20Hz 快照 ·<br/>客户端预测 + 回滚和解 · 实体插值</div>
+  </div>
+  <div id="mapBox" class="panel"><div class="cap">300m 航区 · 迷雾</div><canvas id="map" width="168" height="168"></canvas></div>
+  <div id="coins" class="panel"><b id="coinNum">0</b> <span style="font-size:12px;opacity:.8">贝壳币</span><div class="k">击杀 <span id="killNum">0</span> · 按 <kbd>B</kbd> 开商店</div></div>
+  <div id="hint" class="panel">
+    <div id="prompt"></div>
+    <div><kbd>鼠标</kbd>瞄准 / 按住左键开火（后坐力推船） <kbd>WASD</kbd>轻划桨 <kbd>E</kbd>救队友 <kbd>B</kbd>商店
+      <button class="btn" id="openShop" style="display:none;padding:3px 12px;margin-left:8px">⛵ 打开商店</button></div>
+  </div>
+  <div id="toasts"></div>
+</div>
+
+<div id="shop" class="panel">
+  <h3>⛵ 流浪商船 · 补给站</h3>
+  <div class="shSub">共享贝壳币 <b id="shopCoins" style="color:#ffd98a;font-size:13px">0</b> ¢ · 升级对购买者生效 · 按 1–7 快捷购买</div>
+  <div id="shopList"></div>
+  <div style="text-align:center"><button class="btn" id="shopClose">关闭 (B)</button></div>
+</div>
+
+<div id="start" class="overlay">
+  <div class="card panel">
+    <h1>水豚双舟</h1>
+    <div class="sub">CAPYBARA CO-OP · 夕照浅海 · 300m 未知航区</div>
+    <div class="grid">
+      <div class="feat"><b>🔫 后坐力即引擎</b><span>开枪的反冲会把小船推向反方向。想往右走，就朝左打。连续点射 = 持续航行。</span></div>
+      <div class="feat"><b>💛 五颗心 + 救援</b><span>每船 5 心，倒地不淘汰，队友靠近按住 E 2.5 秒扶起；两人同时倒地即失败。</span></div>
+      <div class="feat"><b>🧭 迷雾与秘藏</b><span>300m 海域分成 64 格，均有未知地貌。沉船、漩涡、神龛与符文藏在雾里；集齐 3 枚符文可提前唤醒首领。</span></div>
+      <div class="feat"><b>⚡ 随机事件与战利品</b><span>每局地形、港口、宝箱都重新生成；宝箱潮、怪潮、落雷、洋流、幽灵商船轮番登场，怪物掉落护盾与增益。</span></div>
+      <div class="feat"><b>⛵ 商船与首领</b><span>商船每班换个港口，逼你把地图跑开；生存 4 分钟后深渊巨兽登场，击杀即通关。</span></div>
+    </div>
+    <div class="row">
+      <button class="btn primary" id="btnSolo">开始游戏（AI 队友）</button>
+      <button class="btn" id="btnHost">创建房间 · 等人加入</button>
+      <button class="btn" id="btnJoin">加入房间 · 另一台设备</button>
+    </div>
+    <div class="field">
+      房间 <input type="text" id="roomName" value="capy-1" style="width:100px" />
+      昵称 <input type="text" id="playerName" placeholder="留空自动命名" style="width:130px" />
+      中继 <input type="text" id="wsUrl" placeholder="留空＝自动使用服务器中继" style="width:220px" />
+      <span id="relayState" style="font-size:10px"></span>
+    </div>
+    <div class="note">
+      联机说明：由本项目服务器托管时会自动连上同域中继。一台设备点「创建房间」进入候船厅，其他人点「加入房间」，房主等人齐后点「开始游戏」才开局；房间最多 12 人、同场最多 6 条船，空位由 AI 补上，多出的连接自动观战（HTTPS 站点会自动使用 wss://）。
+      若直接用静态文件或别的服务器打开，同一浏览器的多个标签页也能直连（BroadcastChannel / localStorage）；也可手动填入中继地址实现跨设备。
+      中继只需把收到的 JSON 原样广播给同房间的其他连接（消息含 room / from / type 字段）。
+      主机运行 60Hz 权威模拟，客户端发送 60Hz 输入并做本地预测，收到 20Hz 快照后回滚、重放输入完成和解，其余实体做插值。
+    </div>
+  </div>
+</div>
+
+<div id="wait" class="overlay hidden">
+  <div class="card panel">
+    <h1>候船厅</h1>
+    <div class="sub">房间 <b id="waitRoom" style="color:var(--sun)"></b> · <span id="waitCount"></span></div>
+    <div id="waitList"></div>
+    <div class="row">
+      <button class="btn primary" id="btnStartRoom">开始游戏</button>
+      <button class="btn" id="btnLeaveRoom">离开房间</button>
+    </div>
+    <div id="waitHint"></div>
+  </div>
+</div>
+
+<div id="end" class="overlay hidden">
+  <div class="card panel">
+    <h1 id="endTitle">航区失守</h1>
+    <div class="sub" id="endSub">两只水豚都倒下了……</div>
+    <div class="stats"><div><b id="endTime">00:00</b>生存时间</div><div><b id="endKills">0</b>击杀</div><div><b id="endWave">1</b>波次</div></div>
+    <div class="row">
+      <button class="btn primary" id="btnRestart">再来一局</button>
+      <button class="btn" id="btnBackLobby">返回房间</button>
+    </div>
+  </div>
+</div>
+<script type="module">
+/* 水豚双舟 · 由 build.mjs 从 src/ 拼装生成，请勿手改；改动请编辑 src/ 后重新构建 */
+let THREE;
+async function loadThree(){
+  const urls=[
+    'https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js',
+    'https://unpkg.com/three@0.161.0/build/three.module.js',
+    'https://esm.sh/three@0.161.0'
+  ];
+  let err;
+  for(const u of urls){ try{ return await import(u); }catch(e){ err=e; } }
+  throw err;
+}
+THREE = await loadThree();
+
+/* ================= core.js ================= */
+/* core.js —— 由 tools/split.mjs 生成后可自由编辑 */
+const $ = id => document.getElementById(id);
+const STEP=1/60, SNAP_TICKS=3, ARENA=150, BOSS_TIME=240, SHOP_RANGE=14;
+const CELL=40, GRID=8, HALF=GRID*CELL/2;          // 320m 见方，圆形航区半径 150m
+const MERCH_WINDOWS=[[38,64],[96,122],[154,180],[206,232]];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const lerp=(a,b,t)=>a+(b-a)*t;
+const hypot=(x,z)=>Math.sqrt(x*x+z*z);
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+let decoRnd=mulberry32(20261107);
+function cellOf(x,z){
+  const cx=Math.floor((x+HALF)/CELL),cz=Math.floor((z+HALF)/CELL);
+  if(cx<0||cz<0||cx>=GRID||cz>=GRID)return -1;
+  return cz*GRID+cx;
+}
+function cellCenter(i){return{x:(i%GRID)*CELL-HALF+CELL/2,z:Math.floor(i/GRID)*CELL-HALF+CELL/2};}
+function inArena(x,z,pad){return hypot(x,z)<ARENA-(pad||0);}
+
+
+/* ================= config.js ================= */
+/* config.js —— 由 tools/split.mjs 生成后可自由编辑 */
+const WEAPONS={
+  pistol :{name:'水豚手铳',rate:5.2,dmg:18,speed:36,spread:.025,pellets:1,recoil:3.1,life:1.5,aoe:0,color:0xffd98a},
+  shotgun:{name:'双管霰弹',rate:1.8,dmg:13,speed:32,spread:.30,pellets:5,recoil:7.2,life:.85,aoe:0,color:0xffb36b},
+  smg    :{name:'连发水枪',rate:10.5,dmg:10,speed:42,spread:.11,pellets:1,recoil:1.75,life:1.2,aoe:0,color:0x9fe8ff},
+  cannon :{name:'深水重炮',rate:1.25,dmg:72,speed:28,spread:.02,pellets:1,recoil:10.5,life:1.6,aoe:2.6,color:0xff8c5a}
+};
+const SHOP=[
+  {id:'shotgun',name:'双管霰弹',ic:'▸▸',desc:'5 发扇形弹丸 · 巨大后坐推力',cost:70,kind:'weapon',val:'shotgun'},
+  {id:'smg',name:'连发水枪',ic:'≋',desc:'10.5 发/秒 · 轻快连续推进',cost:150,kind:'weapon',val:'smg'},
+  {id:'cannon',name:'深水重炮',ic:'◉',desc:'范围爆炸 · 一炮把船轰出去',cost:280,kind:'weapon',val:'cannon'},
+  {id:'dmg',name:'淬毒弹头',ic:'✦',desc:'子弹伤害 +25%（可叠加）',cost:90,kind:'stat'},
+  {id:'recoil',name:'反冲引擎',ic:'↯',desc:'后坐推力 +22%（船更快）',cost:85,kind:'stat'},
+  {id:'pierce',name:'穿甲弹芯',ic:'➶',desc:'子弹额外穿透 1 个目标',cost:120,kind:'stat'},
+  {id:'hull',name:'加固船板',ic:'♥',desc:'心上限 +1 并立即回复 2 心',cost:65,kind:'stat'}
+];
+const MON={
+  reef   :{hp:34,speed:2.7,r:.95,dmg:1,coin:7,color:0x2e6d72,eye:0xffcf72},
+  spitter:{hp:52,speed:1.7,r:1.05,dmg:1,coin:13,color:0x7b4b8c,eye:0xff7bd0},
+  brute  :{hp:150,speed:1.35,r:1.7,dmg:2,coin:26,color:0x8c4040,eye:0xff9a6a}
+};
+const MAX_SEATS=6, MAX_ROOM=12;      // 同场最多 6 条船，房间最多 12 个连接（其余观战）
+const PCOLOR=[0xffb15c,0x6fd6ff,0x8ce8b0,0xd9b8ff,0xff8f8f,0xffd277];
+const PHEX=['#ffb15c','#6fd6ff','#8ce8b0','#d9b8ff','#ff8f8f','#ffd277'];
+const PNAME=['橙队','蓝队','绿队','紫队','红队','金队'];
+function teamName(i){return PNAME[i]||(i+1)+'队';}
+const OBSTACLES=[],THORNS=[],WORLD={seed:0,cells:[],ports:[],landmarks:[]};
+
+/* 分区地貌 / 未知点 / 随机事件 */
+const BIOME_INFO={
+  shoal :{name:'银鳞浅滩',color:'#3f9e96',tint:0x63c6b4},
+  kelp  :{name:'摇曳藻林',color:'#3b8f6a',tint:0x4fa87c},
+  coral :{name:'七彩珊瑚园',color:'#c9768f',tint:0xff9f9f},
+  thorn :{name:'荆棘迷宫',color:'#6b4a6b',tint:0x7a4a68},
+  wreck :{name:'沉船墓地',color:'#7b7566',tint:0x9a8a70},
+  vent  :{name:'沸泉热流',color:'#b56b4f',tint:0xff9a5a},
+  trench:{name:'幽暗海沟',color:'#334a68',tint:0x3a5a80},
+  isle  :{name:'夕照列岛',color:'#c9ab74',tint:0xefd6a2}
+};
+const BIOME_KEYS=Object.keys(BIOME_INFO);
+const POI_INFO={
+  cache    :{name:'漂流补给箱',ic:'▣',color:0xffd277},
+  wreck    :{name:'沉船遗骸',  ic:'⚓',color:0xb9a07a},
+  whirlpool:{name:'传送漩涡',  ic:'◉',color:0x7fd8e8},
+  shrine   :{name:'珊瑚神龛',  ic:'✧',color:0xff9ad0},
+  rune     :{name:'深渊符文',  ic:'◆',color:0xb98cff}
+};
+const EVENT_INFO={
+  treasure:{name:'宝箱潮',  desc:'海面浮起一批补给箱，抢！',          color:'#ffd277'},
+  swarm   :{name:'怪潮来袭',desc:'兽群聚集，击杀奖励翻倍',            color:'#ff8f7a'},
+  storm   :{name:'落雷风暴',desc:'躲开落雷，雷后会留下贝壳币',        color:'#9fd8ff'},
+  current :{name:'奇异洋流',desc:'水流推着船走，操作手感变了！',      color:'#7fe3c0'},
+  ghost   :{name:'幽灵商船',desc:'限时补给站在海面浮现',              color:'#ffb15c'},
+  bloom   :{name:'荆棘开花',desc:'荆棘暂时无害，靠近还能回血',        color:'#8ce8b0'},
+  reveal  :{name:'海雾散去',desc:'全图线索短暂显现，记住位置！',      color:'#d9b8ff'},
+  meteor  :{name:'陨石雨',  desc:'躲开落点，捡走陨晶',                color:'#ff9a5a'}
+};
+const EVENT_KEYS=Object.keys(EVENT_INFO);
+const PORT_NAMES=['锚湾','落日礁','鲸骨港','雾灯渡','碎帆湾','珊瑚堤','远星泊','潮声渡'];
+
+
+/* ================= state.js ================= */
+/* state.js —— 由 tools/split.mjs 生成后可自由编辑 */
+
+function makePlayer(id,x,z){return{id,x,z,vx:0,vz:0,aim:0,hearts:5,maxHearts:5,downed:false,
+  dead:false,revive:0,invuln:0,fireCd:0,weapon:'pistol',dmgMul:1,recoilMul:1,pierce:0,kills:0,
+  shield:0,thrust:1,power:1,thrustT:0,powerT:0,curX:0,curZ:0,dig:0,digId:0,warpCd:0};}
+function makeState(){return{
+  phase:'lobby',tick:0,gameTime:0,wave:1,spawnTimer:2.2,coins:0,kills:0,
+  worldSeed:(Math.random()*2147483647)|0,
+  players:[makePlayer(0,-8,8),makePlayer(1,8,8)],
+  bullets:[],monsters:[],boss:null,bossDead:false,
+  merchant:{active:false,x:0,z:0,timeLeft:0,next:0,portId:-1,ghost:false,name:''},
+  ports:[],pois:[],pickups:[],explored:new Array(GRID*GRID).fill(0),exploreCount:0,
+  event:null,eventTimer:22,runes:0,revealT:0,
+  members:[],seats:[null,null],aiActive:[false,true],hostUid:null,
+  events:[],pendingEvents:[],nextId:1,bothDown:0,
+  remoteInputs:[{inp:null,tick:0,at:0},{inp:null,tick:0,at:0}],acks:[0,0]
+};}
+let S=makeState();
+
+/* 每局随机：港口、兴趣点。地形由 worldSeed 决定，两端一致；这里的内容每局都不同 */
+function initRun(st){
+  const r=mulberry32((Math.random()*2147483647)|0);
+  st.ports=[];
+  for(let i=0;i<7;i++){
+    let x,z,t=0;
+    do{const a=r()*6.28,rad=35+r()*105;x=Math.cos(a)*rad;z=Math.sin(a)*rad;t++;}
+    while(t<40&&(!inArena(x,z,14)||OBSTACLES.some(o=>hypot(x-o.x,z-o.z)<o.r+11)));
+    st.ports.push({id:i,x,z,name:PORT_NAMES[i%PORT_NAMES.length]});
+  }
+  st.pois=[];
+  const place=type=>{
+    let ci,x,z,t=0;
+    do{ci=Math.floor(r()*GRID*GRID);const c=cellCenter(ci);
+       x=c.x+(r()-.5)*CELL*.72;z=c.z+(r()-.5)*CELL*.72;t++;}
+    while(t<50&&(!inArena(x,z,12)||OBSTACLES.some(o=>hypot(x-o.x,z-o.z)<o.r+6)));
+    st.pois.push({id:st.nextId++,type,x,z,cell:ci,found:false,revealed:false,spin:r()*6.28});
+  };
+  for(let i=0;i<3;i++)place('rune');     // 集齐 3 枚可提前召唤首领
+  for(let i=0;i<3;i++)place('wreck');
+  place('whirlpool');place('shrine');place('whirlpool');
+  for(let i=0;i<11;i++)place('cache');
+}
+
+
+
+/* ================= net.js ================= */
+/* net.js —— 由 tools/split.mjs 生成后可自由编辑 */
+
+const NET={
+  role:'solo',uid:Math.random().toString(36).slice(2,10),room:'capy-1',wsUrl:'',
+  transport:null,clientId:1,clientTick:0,connected:false,spectator:false,
+  members:[],hostUid:null,roomPhase:'lobby',inRoom:false,
+  prevSnap:null,lastSnap:null,snapAt:0,snapCount:0,snapRate:0,rateAt:0,
+  pred:null,predErr:0,inputHistory:new Map(),lastInput:null,
+  rtt:0,pingAt:0,latency:30,seen:new Set(),worldSeed:null
+};
+function makeTransport(room,wsUrl){
+  const cbs=[]; let bc=null,ws=null,queue=[];
+  const deliver=m=>{
+    if(!m||m.from===NET.uid||m.room!==room)return;
+    if(m.n){ if(NET.seen.has(m.n))return; NET.seen.add(m.n); if(NET.seen.size>400)NET.seen.clear(); }
+    cbs.forEach(f=>f(m));
+  };
+  if(wsUrl){
+    let warned=false;
+    const warn=t=>{if(!warned){warned=true;toast('⚠ '+t+' · 请确认 wss:// 地址与反代 Upgrade 配置','hot');}};
+    // 把房间名放进握手 URL，服务端在连接建立时即登记，避免首条消息丢失
+    let target=wsUrl;
+    try{const u=new URL(wsUrl,location.href);u.searchParams.set('room',room);target=u.toString();}catch(_){}
+    try{ ws=new WebSocket(target);
+      ws.onmessage=e=>{try{deliver(JSON.parse(e.data));}catch(_){}};
+      ws.onopen=()=>{warned=false;queue.forEach(m=>ws.send(m));queue=[];};
+      ws.onerror=()=>warn('中继连接失败');
+      ws.onclose=()=>warn('中继已断开');
+    }catch(e){ warn('中继地址无效'); }
+  }else{
+    try{ if('BroadcastChannel' in window){ bc=new BroadcastChannel('capy_'+room);
+      bc.onmessage=e=>deliver(e.data); } }catch(_){}
+    window.addEventListener('storage',e=>{
+      if(!e.newValue||e.key!=='capy_msg_'+room)return;
+      try{deliver(JSON.parse(e.newValue));}catch(_){}
+    });
+  }
+  return {
+    send(m){
+      const msg=Object.assign({},m,{room,from:NET.uid,n:Math.random().toString(36).slice(2)});
+      const raw=JSON.stringify(msg);
+      if(bc){try{bc.postMessage(msg);}catch(_){}}
+      if(ws){ if(ws.readyState===1)ws.send(raw); else queue.push(raw); }
+      if(!wsUrl){ try{localStorage.setItem('capy_msg_'+room,raw);}catch(_){} }
+    },
+    onMessage(f){cbs.push(f);},
+    close(){ try{bc&&bc.close();}catch(_){} try{ws&&ws.close();}catch(_){} }
+  };
+}
+function netSend(m){ if(NET.transport)NET.transport.send(m); }
+
+
+
+/* ================= scene.js ================= */
+/* scene.js —— 由 tools/split.mjs 生成后可自由编辑 */
+
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(46,innerWidth/innerHeight,.5,600);
+camera.position.set(0,25,18);
+const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(innerWidth,innerHeight);
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure=1.12;
+$('app').appendChild(renderer.domElement);
+scene.fog=new THREE.Fog(0xf6a878,58,230);   // 远方朦胧，未知海域藏在雾里
+
+const timeU={value:0};
+function basic(color,opts={}){return new THREE.MeshStandardMaterial({color,roughness:.84,metalness:.03,...opts});}
+function glowTex(){
+  const c=document.createElement('canvas');c.width=c.height=128;
+  const g=c.getContext('2d').createRadialGradient(64,64,0,64,64,64);
+  g.addColorStop(0,'rgba(255,255,255,1)');g.addColorStop(.25,'rgba(255,235,190,.75)');
+  g.addColorStop(1,'rgba(255,190,120,0)');
+  const ctx=c.getContext('2d');ctx.fillStyle=g;ctx.fillRect(0,0,128,128);
+  return new THREE.CanvasTexture(c);
+}
+const GLOW=glowTex();
+function spriteGlow(color,size,opacity=1){
+  const s=new THREE.Sprite(new THREE.SpriteMaterial({map:GLOW,color,transparent:true,
+    blending:THREE.AdditiveBlending,depthWrite:false,opacity}));
+  s.scale.set(size,size,1);return s;
+}
+
+
+/* ================= pipeline.js ================= */
+/* pipeline.js —— 由 tools/split.mjs 生成后可自由编辑 */
+
+/* ========== 程序化建模管线 ==========
+   每个部件带独立颜色 / 变换，合并为一份带顶点色的 BufferGeometry，
+   因此几十个零件也只占 1~2 个 draw call，可以放心堆细节。 */
+const _M=new THREE.Matrix4(),_Q=new THREE.Quaternion(),_E=new THREE.Euler(),
+      _V=new THREE.Vector3(),_S=new THREE.Vector3(),_C=new THREE.Color();
+function P(geo,color,pos,rot,scale){return{geo,color,pos:pos||[0,0,0],rot:rot||[0,0,0],scale:scale||[1,1,1]};}
+function mergeParts(parts){
+  const vp=[],vn=[],vc=[];
+  for(const q of parts){
+    const g=q.geo.index?q.geo.toNonIndexed():q.geo.clone();
+    _E.set(q.rot[0],q.rot[1],q.rot[2]);_Q.setFromEuler(_E);
+    _M.compose(_V.set(q.pos[0],q.pos[1],q.pos[2]),_Q,_S.set(q.scale[0],q.scale[1],q.scale[2]));
+    g.applyMatrix4(_M);
+    const pa=g.getAttribute('position'),na=g.getAttribute('normal');_C.set(q.color);
+    for(let i=0;i<pa.count;i++){
+      vp.push(pa.getX(i),pa.getY(i),pa.getZ(i));
+      vn.push(na.getX(i),na.getY(i),na.getZ(i));
+      vc.push(_C.r,_C.g,_C.b);
+    }
+    g.dispose();
+  }
+  const o=new THREE.BufferGeometry();
+  o.setAttribute('position',new THREE.Float32BufferAttribute(vp,3));
+  o.setAttribute('normal',new THREE.Float32BufferAttribute(vn,3));
+  o.setAttribute('color',new THREE.Float32BufferAttribute(vc,3));
+  o.computeBoundingSphere();return o;
+}
+function modelGroup(parts,glowParts,opt){
+  opt=opt||{};const g=new THREE.Group();
+  if(parts&&parts.length){
+    const geo=mergeParts(parts);
+    g.add(new THREE.Mesh(geo,new THREE.MeshStandardMaterial({vertexColors:true,
+      roughness:opt.rough??.80,metalness:opt.metal??.05,
+      side:opt.side||THREE.FrontSide,flatShading:!!opt.flat})));
+    if(opt.outline){
+      const o=new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:opt.outline,side:THREE.BackSide}));
+      o.scale.setScalar(1+(opt.ow||.028));g.add(o);
+    }
+  }
+  if(glowParts&&glowParts.length)
+    g.add(new THREE.Mesh(mergeParts(glowParts),
+      new THREE.MeshBasicMaterial({vertexColors:true,side:THREE.DoubleSide})));
+  return g;
+}
+function gridGeo(nu,nv,fn,flip){
+  const p=[],idx=[];
+  for(let i=0;i<=nu;i++)for(let j=0;j<=nv;j++){const a=fn(i/nu,j/nv);p.push(a[0],a[1],a[2]);}
+  for(let i=0;i<nu;i++)for(let j=0;j<nv;j++){
+    const a=i*(nv+1)+j,b=a+1,c=a+nv+1,d=c+1;
+    if(!flip)idx.push(a,c,b,b,c,d);else idx.push(a,b,c,b,d,c);
+  }
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.Float32BufferAttribute(p,3));g.setIndex(idx);
+  g.computeVertexNormals();return g;
+}
+function roundedBox(w,h,d,r,seg){
+  const g=new THREE.BoxGeometry(w,h,d,seg||4,seg||4,seg||4);
+  const p=g.attributes.position,ix=w/2-r,iy=h/2-r,iz=d/2-r,v=new THREE.Vector3(),c=new THREE.Vector3();
+  for(let i=0;i<p.count;i++){
+    v.set(p.getX(i),p.getY(i),p.getZ(i));
+    c.set(clamp(v.x,-ix,ix),clamp(v.y,-iy,iy),clamp(v.z,-iz,iz));
+    v.sub(c);const l=v.length()||1;v.multiplyScalar(r/l).add(c);
+    p.setXYZ(i,v.x,v.y,v.z);
+  }
+  g.computeVertexNormals();return g;
+}
+function tubeGeo(pts,r,rad){
+  return new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map(a=>new THREE.Vector3(a[0],a[1],a[2]))),
+    Math.max(6,pts.length*3),r,rad||6,false);
+}
+function latheGeo(profile,seg){return new THREE.LatheGeometry(profile.map(a=>new THREE.Vector2(a[0],a[1])),seg||18);}
+function deform(geo,fn){
+  const p=geo.attributes.position,v=new THREE.Vector3();
+  for(let i=0;i<p.count;i++){v.set(p.getX(i),p.getY(i),p.getZ(i));fn(v,i);p.setXYZ(i,v.x,v.y,v.z);}
+  geo.computeVertexNormals();return geo;
+}
+function leafGeo(len,wid,bend,seg){
+  return gridGeo(seg||7,4,(t,u)=>{const s=u*2-1;
+    return [s*(wid*.5*Math.sin(Math.PI*Math.pow(t,.75))+.002),-bend*t*t,t*len];});
+}
+function shade(hex,k){const c=new THREE.Color(hex);c.multiplyScalar(k);return c.getHex();}
+function softShadowTex(){
+  const c=document.createElement('canvas');c.width=c.height=128;const x=c.getContext('2d');
+  const g=x.createRadialGradient(64,64,3,64,64,64);
+  g.addColorStop(0,'rgba(7,30,38,.68)');g.addColorStop(.5,'rgba(7,30,38,.34)');g.addColorStop(1,'rgba(7,30,38,0)');
+  x.fillStyle=g;x.fillRect(0,0,128,128);return new THREE.CanvasTexture(c);
+}
+const SHADOW_TEX=softShadowTex();
+scene.add(new THREE.AmbientLight(0xffe9d0,.30));
+
+// 天空 / 夕阳
+{
+  const sky=new THREE.Mesh(new THREE.SphereGeometry(360,24,16),new THREE.ShaderMaterial({
+    side:THREE.BackSide,depthWrite:false,fog:false,
+    vertexShader:'varying vec3 vP; void main(){vP=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
+    fragmentShader:`varying vec3 vP;
+      void main(){float h=normalize(vP).y;
+        vec3 top=vec3(.16,.20,.38), mid=vec3(.85,.43,.36), hor=vec3(1.0,.69,.40);
+        vec3 c=mix(hor,mid,smoothstep(-.05,.30,h));c=mix(c,top,smoothstep(.25,.85,h));
+        gl_FragColor=vec4(c,1.0);
+        // 风格化着色器直接输出颜色
+      }`
+  }));
+  scene.add(sky);
+  const sun=spriteGlow(0xffd39a,74,.95);sun.position.set(-190,42,-230);scene.add(sun);
+  const sun2=spriteGlow(0xff8f55,130,.5);sun2.position.set(-190,42,-230);scene.add(sun2);
+  // 远处岛影
+  const dm=new THREE.MeshBasicMaterial({color:0x6b4b58,fog:false});
+  for(let i=0;i<7;i++){
+    const h=6+decoRnd()*13;
+    const m=new THREE.Mesh(new THREE.ConeGeometry(9+decoRnd()*14,h,5),dm);
+    m.position.set(-190+i*62,-h/2+2,-235+decoRnd()*16);m.rotation.y=decoRnd();scene.add(m);
+  }
+}
+scene.add(new THREE.HemisphereLight(0xffd9a8,0x245e68,1.05));
+{
+  const dl=new THREE.DirectionalLight(0xffa066,1.5);dl.position.set(-70,32,-90);scene.add(dl);
+  const fl=new THREE.DirectionalLight(0x8fd8e0,.55);fl.position.set(60,50,40);scene.add(fl);
+}
+
+// 海床
+{
+  const g=new THREE.PlaneGeometry(1000,1000,1,1);g.rotateX(-Math.PI/2);
+  const m=new THREE.ShaderMaterial({
+    uniforms:{uTime:timeU},
+    vertexShader:'varying vec3 vW; void main(){vec4 w=modelMatrix*vec4(position,1.0);vW=w.xyz;gl_Position=projectionMatrix*viewMatrix*w;}',
+    fragmentShader:`uniform float uTime;varying vec3 vW;
+      void main(){
+        float c=sin(vW.x*.85+uTime*.45)*sin(vW.z*.78-uTime*.38);
+        float c2=sin(vW.x*.32-vW.z*.27+uTime*.2);
+        vec3 a=vec3(.58,.72,.62),b=vec3(.86,.80,.60);
+        vec3 col=mix(a,b,.5+.32*c+.12*c2);
+        float r=length(vW.xz);col*=1.0-smoothstep(160.0,420.0,r)*.35;
+        gl_FragColor=vec4(col,1.0);
+        // 风格化着色器直接输出颜色
+      }`
+  });
+  const mesh=new THREE.Mesh(g,m);mesh.position.y=-2.6;scene.add(mesh);
+}
+// 水面
+{
+  const g=new THREE.PlaneGeometry(1000,1000,140,140);g.rotateX(-Math.PI/2);
+  const m=new THREE.ShaderMaterial({
+    uniforms:{uTime:timeU,uSun:{value:new THREE.Vector3(-.62,.42,-.66).normalize()}},
+    transparent:true,depthWrite:false,side:THREE.DoubleSide,
+    vertexShader:`uniform float uTime;varying vec3 vW;varying vec3 vN;
+      float wv(vec2 p,float t){return sin(p.x*.24+t*.9)*.10+sin(p.y*.31-t*1.1)*.08+sin((p.x+p.y)*.13+t*.6)*.07;}
+      void main(){vec4 w=modelMatrix*vec4(position,1.0);
+        float h=wv(w.xz,uTime);w.y+=h;
+        float e=.4;
+        float hx=wv(w.xz+vec2(e,0.),uTime)-wv(w.xz-vec2(e,0.),uTime);
+        float hz=wv(w.xz+vec2(0.,e),uTime)-wv(w.xz-vec2(0.,e),uTime);
+        vN=normalize(vec3(-hx/(2.*e),1.,-hz/(2.*e)));vW=w.xyz;
+        gl_Position=projectionMatrix*viewMatrix*w;}`,
+    fragmentShader:`uniform float uTime;uniform vec3 uSun;varying vec3 vW;varying vec3 vN;
+      void main(){
+        vec3 N=normalize(vN),V=normalize(cameraPosition-vW),L=normalize(uSun),H=normalize(L+V);
+        float fres=pow(1.0-max(dot(N,V),0.0),2.0);
+        float pat=sin(vW.x*.17+uTime*.32)*sin(vW.z*.20-uTime*.27);
+        vec3 deep=vec3(.055,.36,.40),shal=vec3(.28,.73,.66);
+        vec3 col=mix(deep,shal,clamp(.46+.30*pat+fres*.30,0.,1.));
+        float spec=pow(max(dot(N,H),0.0),95.0);
+        float glint=pow(max(dot(N,H),0.0),17.0)*.20;
+        float streak=exp(-pow(vW.x+vW.z*.55+34.0,2.0)/900.0);
+        col+=vec3(1.0,.55,.28)*(spec*2.4+glint)*(.35+streak);
+        float foam=smoothstep(.93,.995,sin(vW.x*.55+sin(vW.z*.22+uTime*.7))*.5+.5)*.10;
+        col+=vec3(foam);
+        gl_FragColor=vec4(col,.60+fres*.22);
+        // 风格化着色器直接输出颜色
+      }`
+  });
+  const mesh=new THREE.Mesh(g,m);mesh.position.y=0;mesh.renderOrder=4;scene.add(mesh);
+}
+
+// 岛屿：弯曲椰树 / 分层沙丘 / 带灯室栏杆的灯塔 / 起伏礁岩
+function palm(x,z,s){
+  const parts=[],H=3.9*s,lean=(decoRnd()-.5)*.9;
+  const at=t=>[Math.sin(t*1.5)*lean*s,t*H,Math.cos(t*1.5)*lean*.35*s];
+  for(let i=0;i<6;i++){
+    const t=i/6,t2=(i+1)/6,r0=Math.max(.055,(.21-t*.06)*s);
+    const a0=at(t),a1=at(t2),am=[(a0[0]+a1[0])/2,(a0[1]+a1[1])/2,(a0[2]+a1[2])/2];
+    parts.push(P(tubeGeo([a0,am,a1],r0,8),i%2?0x8b5c39:0xa06e43));
+    parts.push(P(new THREE.TorusGeometry(r0*1.03,.022*s,5,10),0x6d452f,a1,[Math.PI/2,0,0]));
+  }
+  const top=at(1);
+  for(let i=0;i<3;i++){const a=i/3*6.28;
+    parts.push(P(new THREE.SphereGeometry(.16*s,8,6),0x7c5230,
+      [top[0]+Math.cos(a)*.22*s,top[1]-.20*s,top[2]+Math.sin(a)*.22*s]));}
+  for(let i=0;i<9;i++){
+    const a=i/9*6.28+decoRnd()*.18;
+    const lf=leafGeo(2.9*s,.78*s,1.45*s,8);lf.rotateX(-.28);lf.rotateY(a);
+    parts.push(P(lf,i%3?0x4aa46a:0x3d8c59,top));
+  }
+  const g=modelGroup(parts,[],{side:THREE.DoubleSide,rough:.9});
+  g.position.set(x,0,z);return g;
+}
+function lighthouse(){
+  const p=[],gl=[];
+  for(let i=0;i<5;i++)p.push(P(new THREE.CylinderGeometry(.86-i*.02,1.02-i*.02,1.0,14),
+    i%2?0xfff1dc:0xe2684f,[0,i+0.5,0]));
+  p.push(P(roundedBox(.55,.9,.10,.07,3),0x5b3b2c,[0,.48,1.0]));
+  for(let i=0;i<3;i++){const a=i/3*6.28;
+    p.push(P(new THREE.CylinderGeometry(.17,.17,.08,10),0x7fd8d0,
+      [Math.cos(a)*.9,1.8+i*1.25,Math.sin(a)*.9],[Math.PI/2,0,-a]));}
+  p.push(P(new THREE.CylinderGeometry(1.25,1.25,.16,16),0x5b4438,[0,5.1,0]));
+  for(let i=0;i<12;i++){const a=i/12*6.28;
+    p.push(P(new THREE.CylinderGeometry(.035,.035,.55,5),0x4a3730,[Math.cos(a)*1.15,5.45,Math.sin(a)*1.15]));}
+  p.push(P(new THREE.TorusGeometry(1.15,.045,6,20),0x4a3730,[0,5.72,0],[Math.PI/2,0,0]));
+  p.push(P(new THREE.CylinderGeometry(.72,.72,1.0,12),0xffe6ae,[0,5.95,0]));
+  for(let i=0;i<8;i++){const a=i/8*6.28;
+    p.push(P(new THREE.CylinderGeometry(.045,.045,1.0,5),0x5b4438,[Math.cos(a)*.73,5.95,Math.sin(a)*.73]));}
+  p.push(P(new THREE.ConeGeometry(.95,.85,12),0x4d3b3b,[0,6.9,0]));
+  gl.push(P(new THREE.SphereGeometry(.34,10,8),0xffd07a,[0,5.95,0]));
+  const g=modelGroup(p,gl,{rough:.75});
+  const lamp=spriteGlow(0xffd08a,4.2,.8);lamp.position.set(0,5.95,0);g.add(lamp);
+  return g;
+}
+function rockCluster(count,spread,base){
+  const p=[];
+  for(let i=0;i<count;i++){
+    const a=decoRnd()*6.28,r=decoRnd()*spread,sz=.45+decoRnd()*.95;
+    const g=deform(new THREE.DodecahedronGeometry(sz,1),v=>{
+      const k=1+.16*Math.sin(v.x*4+v.z*3)+.10*Math.cos(v.y*5-v.x*2);v.multiplyScalar(k);v.y*=.7;
+    });
+    p.push(P(g,i%2?0x8c7a72:0xa08b7b,[Math.cos(a)*r,base+decoRnd()*.4,Math.sin(a)*r],
+      [decoRnd()*.5,decoRnd()*6.28,decoRnd()*.4]));
+    if(i%3===0)p.push(P(new THREE.SphereGeometry(sz*.42,8,6),0x5f9a6a,
+      [Math.cos(a)*r,base+sz*.5,Math.sin(a)*r],[0,0,0],[1,.28,1]));
+  }
+  return p;
+}
+
+
+/* ================= world.js ================= */
+/* world.js —— 由 tools/split.mjs 生成后可自由编辑 */
+
+/* ============ 大世界：按 seed 重建 320m 航区 ============ */
+const worldRoot=new THREE.Group();scene.add(worldRoot);
+
+function makeIsland(r,withLighthouse){
+  const g=new THREE.Group();
+  const sand=deform(new THREE.SphereGeometry(r,30,16),v=>{
+    const k=1+.05*Math.sin(v.x*.7+v.z*.5)+.04*Math.cos(v.z*.9-v.x*.3);
+    v.x*=k;v.z*=k;v.y*=.20;v.y+=.16*Math.max(0,1-Math.hypot(v.x,v.z)/(r*.75));
+  });
+  const mound=new THREE.Mesh(sand,basic(0xefd6a2,{flatShading:true}));mound.position.y=-.72;g.add(mound);
+  const wet=new THREE.Mesh(new THREE.CylinderGeometry(r*.94,r*1.02,.22,32),basic(0xd9b987));
+  wet.position.y=-.35;g.add(wet);
+  const green=deform(new THREE.SphereGeometry(r*.6,22,10),v=>{v.y*=.13;});
+  const grass=new THREE.Mesh(green,basic(0x63a367,{flatShading:true}));grass.position.y=1.05;g.add(grass);
+  g.add(modelGroup(rockCluster(6,r*.75,-.1),[],{rough:.95,flat:true}));
+  const n=Math.max(2,Math.round(r*.55));
+  for(let i=0;i<n;i++){
+    const a=decoRnd()*6.28,rr=decoRnd()*r*.55;
+    g.add(palm(Math.cos(a)*rr,Math.sin(a)*rr,.55+decoRnd()*.4));
+  }
+  if(withLighthouse){const lh=lighthouse();lh.position.set(r*.15,0,-r*.1);lh.rotation.y=decoRnd()*6.28;g.add(lh);}
+  const foam=new THREE.Mesh(new THREE.RingGeometry(r+1.0,r+2.4,48),
+    new THREE.MeshBasicMaterial({color:0xfff4de,transparent:true,opacity:.32,side:THREE.DoubleSide,depthWrite:false}));
+  foam.rotation.x=-Math.PI/2;foam.position.y=.06;g.add(foam);
+  return g;
+}
+function buildIslands(){
+  OBSTACLES.length=0;
+  const spots=[],count=8+Math.floor(decoRnd()*3);
+  for(let i=0;i<count;i++){
+    let x,z,r,t=0;
+    do{const a=decoRnd()*6.28,rad=32+decoRnd()*108;
+       x=Math.cos(a)*rad;z=Math.sin(a)*rad;r=5.5+decoRnd()*10.5;t++;}
+    while(t<50&&(!inArena(x,z,r+9)||hypot(x,z)<28||spots.some(s=>hypot(x-s.x,z-s.z)<s.r+r+24)));
+    spots.push({x,z,r});OBSTACLES.push({x,z,r});
+    const isle=makeIsland(r,i===0);
+    isle.position.set(x,0,z);isle.rotation.y=decoRnd()*6.28;worldRoot.add(isle);
+  }
+  // 散落暗礁：小型不可通行障碍，让航行有绕行感
+  for(let i=0;i<13;i++){
+    let x,z,r,t=0;
+    do{const a=decoRnd()*6.28,rad=28+decoRnd()*115;
+       x=Math.cos(a)*rad;z=Math.sin(a)*rad;r=2.5+decoRnd()*2.8;t++;}
+    while(t<40&&(!inArena(x,z,r+5)||hypot(x,z)<24||OBSTACLES.some(o=>hypot(x-o.x,z-o.z)<o.r+r+9)));
+    OBSTACLES.push({x,z,r});
+    const rg=new THREE.Group();
+    const rm=deform(new THREE.SphereGeometry(r,16,9),v=>{v.y*=.5;});
+    const rmMesh=new THREE.Mesh(rm,basic(0xc9ad82,{flatShading:true}));rmMesh.position.y=-.72;rg.add(rmMesh);
+    rg.add(modelGroup(rockCluster(4,r*.6,.15),[],{rough:.95,flat:true}));
+    const rf=new THREE.Mesh(new THREE.RingGeometry(r+.4,r+1.4,28),
+      new THREE.MeshBasicMaterial({color:0xfff4de,transparent:true,opacity:.3,side:THREE.DoubleSide,depthWrite:false}));
+    rf.rotation.x=-Math.PI/2;rf.position.y=.06;rg.add(rf);
+    rg.position.set(x,0,z);worldRoot.add(rg);
+  }
+}
+function buildThornMesh(r){
+  const D=0x35283f,p=[],gl=[];
+  for(let k=0;k<4;k++){const a0=k/4*6.28;
+    p.push(P(tubeGeo([[Math.cos(a0)*r*.7,-2.35,Math.sin(a0)*r*.7],
+      [Math.cos(a0+.8)*r*.9,-2.12,Math.sin(a0+.8)*r*.9],
+      [Math.cos(a0+1.7)*r*.6,-1.95,Math.sin(a0+1.7)*r*.6]],.13,7),shade(D,k%2?1.25:.85)));}
+  p.push(P(deform(new THREE.SphereGeometry(1,12,8),v=>{v.y*=.35;}),shade(D,.72),
+    [0,-2.30,0],[0,0,0],[r*.9,1,r*.9]));
+  for(let k=0;k<8;k++){
+    const a=k/8*6.28+decoRnd()*.3,h=1.8+decoRnd()*2.2,rr=decoRnd()*r*.65;
+    const bx=Math.cos(a)*rr,bz=Math.sin(a)*rr,tx=bx+Math.cos(a)*.5,tz=bz+Math.sin(a)*.5;
+    p.push(P(tubeGeo([[bx,-2.2,bz],[bx+Math.cos(a)*.35,-2.2+h*.45,bz+Math.sin(a)*.35],
+      [tx*.85+bx*.15,-2.2+h*.8,tz*.85+bz*.15],[tx,-2.2+h,tz]],.105,7),shade(D,1.05)));
+    p.push(P(new THREE.ConeGeometry(.115,.52,6),shade(D,1.4),
+      [tx,-2.2+h+.18,tz],[Math.cos(a)*.25,0,-Math.sin(a)*.25]));
+    gl.push(P(new THREE.SphereGeometry(.055,6,5),0xff4d6d,[tx,-2.2+h+.42,tz]));
+  }
+  gl.push(P(new THREE.SphereGeometry(.26,10,8),0xd83a5e,[0,-1.95,0]));
+  const g=modelGroup(p,gl,{rough:.78,side:THREE.DoubleSide,outline:0x1d1226,ow:.02});
+  const ring=new THREE.Mesh(new THREE.RingGeometry(r+.15,r+.42,28),
+    new THREE.MeshBasicMaterial({color:0xff5a72,transparent:true,opacity:.28,side:THREE.DoubleSide,depthWrite:false}));
+  ring.rotation.x=-Math.PI/2;ring.position.y=-2.35;g.add(ring);
+  return g;
+}
+
+// 珊瑚 / 海草 / 荆棘 / 鱼群 / 浮标
+const grassData=[],fishData=[];
+function coralParts(kind,col){
+  const p=[],gl=[];
+  if(kind===0){ // 鹿角珊瑚：递归分叉的管状枝
+    const grow=(base,dir,len,r,depth)=>{
+      const end=[base[0]+dir[0]*len,base[1]+dir[1]*len,base[2]+dir[2]*len];
+      const mid=[(base[0]+end[0])/2+(decoRnd()-.5)*.16,(base[1]+end[1])/2,
+                 (base[2]+end[2])/2+(decoRnd()-.5)*.16];
+      p.push(P(tubeGeo([base,mid,end],r,6),depth>1?shade(col,.86):col));
+      p.push(P(new THREE.SphereGeometry(r*1.2,7,5),shade(col,1.18),end));
+      if(depth>0)for(let i=0;i<2+(decoRnd()>.6?1:0);i++){
+        const a=decoRnd()*6.28,sp=.45+decoRnd()*.5;
+        grow(end,[Math.cos(a)*sp,.72+decoRnd()*.4,Math.sin(a)*sp],
+          len*(.60+decoRnd()*.16),r*.68,depth-1);
+      }
+    };
+    for(let i=0;i<3;i++){const a=i/3*6.28;
+      grow([Math.cos(a)*.28,-2.15,Math.sin(a)*.28],[Math.cos(a)*.42,1,Math.sin(a)*.42],
+        .82+decoRnd()*.32,.14,1);}
+    p.push(P(new THREE.SphereGeometry(.62,10,7),shade(col,.62),[0,-2.24,0],[0,0,0],[1,.4,1]));
+  }else if(kind===1){ // 脑珊瑚：沟回表面
+    p.push(P(deform(new THREE.SphereGeometry(1,20,14),v=>{
+      const k=1+.085*Math.sin(v.x*7+v.z*5)*Math.cos(v.y*6);v.multiplyScalar(k);v.y*=.66;
+    }),col,[0,-1.85,0],[0,0,0],[1.05,1,1.05]));
+    for(let i=0;i<12;i++){const a=i/12*6.28;
+      p.push(P(tubeGeo([[Math.cos(a)*.12,-1.18,Math.sin(a)*.12],
+        [Math.cos(a)*.52,-1.52,Math.sin(a)*.52],
+        [Math.cos(a)*.86,-1.94,Math.sin(a)*.86]],.032,5),shade(col,.70)));}
+    gl.push(P(new THREE.SphereGeometry(.10,8,6),shade(col,1.4),[0,-1.15,0]));
+  }else{ // 管状海绵 + 海葵触手
+    for(let i=0;i<5;i++){
+      const a=i/5*6.28,rr=.20+decoRnd()*.45,h=.9+decoRnd()*1.3;
+      const x=Math.cos(a)*rr,z=Math.sin(a)*rr;
+      p.push(P(latheGeo([[.15,0],[.20,h*.35],[.17,h*.8],[.22,h],[.20,h+.06],[.11,h+.02]],12),col,[x,-2.2,z]));
+      gl.push(P(new THREE.TorusGeometry(.17,.028,5,12),shade(col,1.4),[x,-2.2+h,z],[Math.PI/2,0,0]));
+    }
+    for(let i=0;i<14;i++){const a=i/14*6.28;
+      p.push(P(tubeGeo([[Math.cos(a)*.25,-2.15,Math.sin(a)*.25],
+        [Math.cos(a)*.48,-1.75,Math.sin(a)*.48],
+        [Math.cos(a)*.66,-1.48,Math.sin(a)*.66]],.028,5),shade(col,.9)));}
+    p.push(P(new THREE.SphereGeometry(.55,10,7),shade(col,.65),[0,-2.25,0],[0,0,0],[1,.35,1]));
+  }
+  return {parts:p,glow:gl};
+}
+function biomeDecor(bi){
+  const p=[],gl=[];
+  if(bi==='wreck'){
+    p.push(P(roundedBox(3.6,.55,1.6,.16,2),0x6b4a32,[0,-1.65,0],[0,.35,.10]));
+    p.push(P(new THREE.CylinderGeometry(.09,.13,3.4,7),0x5b3f2b,[.7,-.15,.4],[0,0,.62]));
+    p.push(P(roundedBox(2.4,.20,1.1,.06,2),0x8a6440,[-.8,-1.25,.9],[0,-.4,.3]));
+    p.push(P(new THREE.TorusGeometry(.7,.08,6,14),0x7a6a58,[1.5,-1.2,-.5],[0,Math.PI/2,0]));
+    gl.push(P(new THREE.SphereGeometry(.16,8,6),0x8fe3d0,[.2,-1.3,.8]));
+  }else if(bi==='vent'){
+    p.push(P(latheGeo([[.9,0],[.7,.5],[.45,1.1],[.55,1.5],[.3,1.65]],12),0x6b4038,[0,-2.2,0]));
+    p.push(P(new THREE.TorusGeometry(.35,.09,6,12),0x9a5a42,[0,-.55,0],[Math.PI/2,0,0]));
+    gl.push(P(new THREE.SphereGeometry(.22,8,6),0xff9a5a,[0,-.6,0]));
+    for(let i=0;i<5;i++){const a=i/5*6.28;
+      gl.push(P(new THREE.SphereGeometry(.08,6,5),0xffc08a,[Math.cos(a)*.4,-.1+i*.28,Math.sin(a)*.4]));}
+  }else if(bi==='trench'){
+    const g=new THREE.Group();
+    const dark=new THREE.Mesh(new THREE.CircleGeometry(7,28),
+      new THREE.MeshBasicMaterial({color:0x0c2434,transparent:true,opacity:.55,depthWrite:false}));
+    dark.rotation.x=-Math.PI/2;dark.position.y=-2.45;g.add(dark);
+    g.add(modelGroup(rockCluster(4,4,-1.9),[],{rough:.95,flat:true}));
+    return g;
+  }else if(bi==='kelp'){
+    for(let i=0;i<5;i++){const a=i/5*6.28,rr=1+decoRnd()*2.4;
+      p.push(P(tubeGeo([[Math.cos(a)*rr,-2.3,Math.sin(a)*rr],
+        [Math.cos(a)*rr+.4,-.8,Math.sin(a)*rr+.2],
+        [Math.cos(a)*rr+.7,.6,Math.sin(a)*rr+.5]],.09,6),i%2?0x3f8f6a:0x57b184));}
+  }else if(bi==='coral'||bi==='shoal'){
+    const cols=bi==='coral'?[0xff8f8f,0xffb06b,0xd783c8,0xff7f9e]:[0x8fd7c6,0xffd277,0x9fe3d8];
+    const cp=coralParts(bi==='coral'?Math.floor(decoRnd()*2):2,cols[Math.floor(decoRnd()*cols.length)]);
+    const g=modelGroup(cp.parts,cp.glow,{rough:.72,side:THREE.DoubleSide});
+    g.scale.setScalar(.8+decoRnd()*.6);return g;
+  }else if(bi==='thorn'){
+    const g=buildThornMesh(1.2+decoRnd()*.7);g.scale.setScalar(.8);return g;
+  }else{
+    p.push(P(roundedBox(2.2,.5,1.4,.16,2),0xd9b987,[0,-2.05,0]));
+    p.push(P(new THREE.SphereGeometry(.8,10,8),0x63a367,[.5,-1.7,.3],[0,0,0],[1,.5,1]));
+    for(let i=0;i<3;i++)p.push(P(new THREE.SphereGeometry(.12,6,5),0xffd08a,
+      [(decoRnd()-.5)*1.6,-1.6,(decoRnd()-.5)*1.2]));
+  }
+  return modelGroup(p,gl,{rough:.8,side:THREE.DoubleSide});
+}
+function buildCellDecor(){
+  for(let ci=0;ci<GRID*GRID;ci++){
+    const c=cellCenter(ci),bi=WORLD.cells[ci].biome;
+    const n=bi==='kelp'||bi==='coral'?3:2;
+    for(let k=0;k<n;k++){
+      const x=c.x+(decoRnd()-.5)*CELL*.86,z=c.z+(decoRnd()-.5)*CELL*.86;
+      if(!inArena(x,z,5)||OBSTACLES.some(o=>hypot(x-o.x,z-o.z)<o.r+5))continue;
+      const g=biomeDecor(bi);g.position.set(x,0,z);g.rotation.y=decoRnd()*6.28;
+      worldRoot.add(g);
+    }
+  }
+}
+function buildThorns(){
+  for(let i=0;i<30;i++){
+    let x,z,r,t=0;
+    do{const a=decoRnd()*6.28,rad=26+decoRnd()*116;
+       x=Math.cos(a)*rad;z=Math.sin(a)*rad;r=1.6+decoRnd()*1.3;t++;}
+    while(t<45&&(!inArena(x,z,r+6)||hypot(x,z)<25||OBSTACLES.some(o=>hypot(x-o.x,z-o.z)<o.r+r+5)));
+    THORNS.push({x,z,r});
+    const g=buildThornMesh(r);g.position.set(x,0,z);worldRoot.add(g);
+  }
+}
+function buildGrass(){
+  const bladeGeo=gridGeo(7,2,(t,u)=>{const s=u*2-1;
+    return [s*(.115*Math.sin(Math.PI*t)+.012),t*2.5,.09*Math.sin(t*3)*t];});
+  const gm=new THREE.InstancedMesh(bladeGeo,
+    new THREE.MeshStandardMaterial({color:0xffffff,side:THREE.DoubleSide,roughness:.9}),560);
+  for(let i=0;i<560;i++){
+    let x,z,t=0;
+    do{const a=decoRnd()*6.28,rad=Math.sqrt(decoRnd())*(ARENA-6);
+       x=Math.cos(a)*rad;z=Math.sin(a)*rad;t++;}
+    while(t<14&&OBSTACLES.some(o=>hypot(x-o.x,z-o.z)<o.r+2));
+    const ci=cellOf(x,z),bi=ci>=0?WORLD.cells[ci].biome:'shoal';
+    grassData.push({x,z,s:bi==='kelp'?1.1+decoRnd()*1.2:.5+decoRnd()*.9,
+      rot:decoRnd()*6.28,ph:decoRnd()*6.28});
+    gm.setColorAt(i,new THREE.Color().setHSL(.32+decoRnd()*.11,.42,.30+decoRnd()*.22));
+  }
+  gm.instanceColor.needsUpdate=true;
+  gm.instanceMatrix.setUsage(THREE.DynamicDrawUsage);worldRoot.add(gm);window.__grass=gm;
+}
+function buildFish(){
+  const fp=[];
+  fp.push(P(deform(new THREE.SphereGeometry(1,14,10),v=>{v.x*=.155;v.y*=.125;v.z*=.42;}),0xffffff));
+  fp.push(P(gridGeo(3,2,(t,u)=>{const s=u*2-1;return [s*.018,s*.19*(.45+t),-.36-t*.34];}),0xffeccd));
+  fp.push(P(gridGeo(3,2,(t,u)=>{const s=u*2-1;return [s*.012,.11+t*.17,-.14-s*.20];}),0xffdfa8));
+  for(const s of [-1,1])fp.push(P(gridGeo(2,2,(t,u)=>{const q=u*2-1;
+    return [s*(.11+t*.13),-.03-q*.05,-.02-q*.15-t*.10];}),0xffdca0));
+  for(const s of [-1,1])fp.push(P(new THREE.SphereGeometry(.030,7,5),0x2b2320,[s*.115,.045,.25]));
+  const fishGeo=mergeParts(fp);
+  for(let s=0;s<6;s++){
+    const a=decoRnd()*6.28,rad=25+decoRnd()*108,cx=Math.cos(a)*rad,cz=Math.sin(a)*rad;
+    for(let i=0;i<22;i++)fishData.push({cx,cz,a:decoRnd()*6.28,r:2+decoRnd()*6,
+      sp:(s%2?1:-1)*(.45+decoRnd()*.3),y:-.9-decoRnd()*.9,ph:decoRnd()*6.28,s:.7+decoRnd()*.6});
+  }
+  const fm=new THREE.InstancedMesh(fishGeo,
+    new THREE.MeshStandardMaterial({vertexColors:true,side:THREE.DoubleSide,roughness:.55,metalness:.12}),fishData.length);
+  const cols=[0xffd98a,0x9fe3d8,0xffa9a0,0xc7b3ff,0xffe0a0,0x8fd7c6];
+  for(let i=0;i<fishData.length;i++)fm.setColorAt(i,new THREE.Color(cols[Math.floor(i/22)]));
+  fm.instanceColor.needsUpdate=true;
+  fm.instanceMatrix.setUsage(THREE.DynamicDrawUsage);worldRoot.add(fm);window.__fish=fm;
+}
+function buildBuoys(){
+  const bp=[
+    P(latheGeo([[.34,0],[.42,.18],[.38,.52],[.20,.62],[.10,.66]],10),0xf4e3c2,[0,-.30,0]),
+    P(new THREE.CylinderGeometry(.045,.045,.9,6),0x6b4c34,[0,.45,0]),
+    P(new THREE.SphereGeometry(.20,9,7),0xffd08a,[0,.95,0]),
+    P(new THREE.TorusGeometry(.36,.05,6,12),0xff8f6b,[0,-.02,0],[Math.PI/2,0,0])
+  ];
+  const bm=new THREE.InstancedMesh(mergeParts(bp),
+    new THREE.MeshStandardMaterial({vertexColors:true,roughness:.7,side:THREE.DoubleSide}),72);
+  const d0=new THREE.Object3D();
+  for(let i=0;i<72;i++){const a=i/72*6.28;
+    d0.position.set(Math.cos(a)*ARENA,.18,Math.sin(a)*ARENA);
+    d0.rotation.set(0,a,0);d0.scale.setScalar(.9+decoRnd()*.35);d0.updateMatrix();bm.setMatrixAt(i,d0.matrix);}
+  bm.instanceMatrix.needsUpdate=true;worldRoot.add(bm);
+}
+function disposeWorld(){
+  for(const o of worldRoot.children)o.traverse(n=>{
+    if(n.geometry&&n.geometry.dispose)n.geometry.dispose();
+    if(n.material){const ms=Array.isArray(n.material)?n.material:[n.material];for(const m of ms)if(m.dispose)m.dispose();}
+  });
+  worldRoot.clear();
+}
+function buildWorld(seed){
+  disposeWorld();
+  WORLD.seed=seed;decoRnd=mulberry32(seed);
+  THORNS.length=0;grassData.length=0;fishData.length=0;
+  WORLD.cells=[];
+  for(let i=0;i<GRID*GRID;i++)
+    WORLD.cells.push({biome:BIOME_KEYS[Math.floor(decoRnd()*BIOME_KEYS.length)],danger:decoRnd()});
+  const spawn=cellOf(0,0);if(spawn>=0)WORLD.cells[spawn].biome='shoal';
+  buildIslands();buildThorns();buildCellDecor();buildGrass();buildFish();buildBuoys();
+}
+buildWorld(20261107);
+const dummy=new THREE.Object3D();
+
+
+
+/* ================= models.js ================= */
+/* models.js —— 由 tools/split.mjs 生成后可自由编辑 */
+
+function shadow(r,layers){
+  const g=new THREE.Group(),n=layers||2;
+  for(let i=0;i<n;i++){
+    const m=new THREE.Mesh(new THREE.PlaneGeometry(r*2,r*2),
+      new THREE.MeshBasicMaterial({map:SHADOW_TEX,transparent:true,opacity:i===0?.62:.26,
+        depthWrite:false,side:THREE.DoubleSide}));
+    m.rotation.x=-Math.PI/2;m.position.y=.018+i*.008;m.scale.setScalar(1+i*.42);g.add(m);
+  }
+  return g;
+}
+/* 参数化船壳：外板 / 内板 / 船舷厚度 / 龙骨 / 翘起的船首 / 甲板木条 / 铆钉 */
+function hullParts(L,W,H,c){
+  const p=[],keel=-H*.55,zOf=t=>-.5*L+t*L;
+  const width=t=>W*(.82+.18*Math.sin(Math.PI*t))*(1-Math.pow(t,6))+.02*W;
+  const top=t=>H*(1+.52*Math.pow(t,5));
+  p.push(P(gridGeo(18,10,(t,u)=>{const s=u*2-1;
+    return [s*width(t),keel+(top(t)-keel)*Math.pow(Math.abs(s),.60),zOf(t)];}),c.outer));
+  p.push(P(gridGeo(18,10,(t,u)=>{const s=u*2-1;
+    return [s*width(t)*.86,keel+.15+(top(t)-.12-(keel+.15))*Math.pow(Math.abs(s),.68),zOf(t)];}),c.inner));
+  p.push(P(gridGeo(1,6,(t,u)=>{const s=u*2-1;
+    return [s*width(0),keel+(top(0)-keel)*t,zOf(0)];}),c.stern));
+  for(const side of [-1,1]){
+    p.push(P(gridGeo(18,1,(t,u)=>{
+      const o=[side*width(t),top(t),zOf(t)],i=[side*width(t)*.86,top(t)-.12,zOf(t)];
+      return [lerp(o[0],i[0],u),lerp(o[1],i[1],u),o[2]];}),c.rim));
+    const rim=[],wl=[];
+    for(let i=0;i<=14;i++){const t=i/14;
+      rim.push([side*width(t),top(t),zOf(t)]);
+      wl.push([side*width(t)*.95,keel+(top(t)-keel)*.33,zOf(t)]);}
+    p.push(P(tubeGeo(rim,.052,7),c.rim));
+    p.push(P(tubeGeo(wl,.032,6),c.waterline));
+    for(let i=1;i<14;i+=2){const t=i/14;
+      p.push(P(new THREE.SphereGeometry(.043,6,5),c.nail,[side*width(t)*.95,top(t)-.03,zOf(t)]));}
+  }
+  const deckY=H*.16;
+  for(let i=0;i<10;i++){
+    const t=.055+i*.098;
+    p.push(P(roundedBox(width(t)*1.60,.07,L*.085,.018,2),i%2?c.deckA:c.deckB,[0,deckY,zOf(t)]));
+  }
+  for(const t of [.28,.68])p.push(P(roundedBox(width(t)*1.32,.12,.30,.035,3),c.bench,[0,deckY+.10,zOf(t)]));
+  p.push(P(new THREE.SphereGeometry(.14,10,8),c.rim,[0,top(.98)+.03,zOf(.99)]));
+  p.push(P(new THREE.TorusGeometry(.13,.035,6,12),c.nail,[0,top(.86),zOf(.88)],[0,0,0]));
+  p.push(P(tubeGeo([[0,keel-.03,zOf(.05)],[0,keel-.05,zOf(.5)],[0,keel-.02,zOf(.95)]],.075,7),c.keel));
+  return p;
+}
+function wakeGeo(){
+  const p=[],idx=[];
+  for(const s of [-1,1]){
+    const b=p.length/3;
+    p.push(s*.22,0,-1.0, s*1.05,0,-4.9, s*.64,0,-4.9);
+    p.push(s*.22,0,-1.0, s*.64,0,-4.9, s*.38,0,-1.0);
+    idx.push(b,b+1,b+2,b+3,b+4,b+5);
+  }
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.Float32BufferAttribute(p,3));g.setIndex(idx);
+  g.computeVertexNormals();return g;
+}
+/* 水豚：钝方脸 / 鼻吻门牙 / 眼睑耳廓 / 胡须 / 四肢爪 / 毛斑 / 围巾 / 头顶橘子 */
+function capybaraParts(col){
+  const p=[],gl=[];
+  const FUR=0xa9703f,FUR2=0xbd8752,FUR3=0x8d5b32,LIGHT=0xd9a877;
+  p.push(P(deform(new THREE.SphereGeometry(1,22,15),v=>{
+    const t=(v.z+1)/2;v.x*=.60;v.y*=.46;v.z*=.82;v.y+=.06*Math.sin(t*Math.PI);
+  }),FUR,[0,1.06,-.16]));
+  p.push(P(deform(new THREE.SphereGeometry(1,16,12),v=>{v.x*=.52;v.y*=.30;v.z*=.72;}),LIGHT,[0,.89,-.14]));
+  for(let i=0;i<4;i++){const a=i/4*6.28;
+    p.push(P(new THREE.SphereGeometry(.16,8,6),FUR3,
+      [Math.cos(a)*.34,1.42+Math.sin(i)*.04,-.18+Math.sin(a)*.42],[0,0,0],[1.3,.32,1]));}
+  // 俯视辨识：背部深色鞍斑 + 额头浅色斑
+  p.push(P(deform(new THREE.SphereGeometry(1,14,10),v=>{v.x*=.44;v.y*=.09;v.z*=.56;}),
+    shade(FUR,.76),[0,1.49,-.22]));
+  p.push(P(deform(new THREE.SphereGeometry(1,12,8),v=>{v.x*=.26;v.y*=.06;v.z*=.23;}),
+    0xd9a877,[0,1.66,.66]));
+  p.push(P(roundedBox(.76,.58,.64,.17,4),FUR2,[0,1.36,.56]));
+  for(const s of [-1,1])p.push(P(new THREE.SphereGeometry(.25,10,8),FUR2,[s*.32,1.25,.72],[0,0,0],[1,.8,.9]));
+  p.push(P(roundedBox(.50,.32,.34,.12,3),0xc08b58,[0,1.19,.96]));
+  p.push(P(deform(new THREE.SphereGeometry(1,10,8),v=>{v.x*=.20;v.y*=.11;v.z*=.10;}),0x51372a,[0,1.29,1.13]));
+  for(const s of [-1,1])p.push(P(new THREE.SphereGeometry(.032,6,5),0x2c1d18,[s*.085,1.31,1.20]));
+  for(const s of [-1,1])p.push(P(roundedBox(.10,.13,.07,.025,2),0xfff3dc,[s*.075,1.06,1.12]));
+  p.push(P(tubeGeo([[-.16,1.10,1.11],[0,1.075,1.14],[.16,1.10,1.11]],.018,5),0x5a3b2b));
+  for(const s of [-1,1]){
+    p.push(P(new THREE.SphereGeometry(.115,10,8),0x2a1b16,[s*.265,1.46,.82],[0,0,0],[1,1.05,.7]));
+    gl.push(P(new THREE.SphereGeometry(.046,8,6),0xfff6e2,[s*.265+.035,1.50,.88]));
+    p.push(P(tubeGeo([[s*.16,1.55,.86],[s*.265,1.58,.85],[s*.37,1.53,.84]],.028,5),0x8d5b32));
+    p.push(P(deform(new THREE.SphereGeometry(1,10,8),v=>{v.x*=.15;v.y*=.17;v.z*=.09;}),FUR3,
+      [s*.33,1.69,.38],[0,0,s*.28]));
+    p.push(P(deform(new THREE.SphereGeometry(1,8,6),v=>{v.x*=.085;v.y*=.10;v.z*=.045;}),0x8a4a44,
+      [s*.36,1.70,.45]));
+    for(let k=0;k<3;k++){
+      const yy=1.20-k*.055;
+      p.push(P(tubeGeo([[s*.22,yy,1.06],[s*.42,yy+.02*(k-1),1.14],
+        [s*.62,yy+.06*(k-1),1.20]],.010,4),0xe8d3b0));
+    }
+  }
+  for(const s of [-1,1]){
+    p.push(P(new THREE.CylinderGeometry(.115,.14,.44,8),FUR2,[s*.40,.80,.42],[.25,0,s*.10]));
+    for(let k=0;k<3;k++)p.push(P(new THREE.ConeGeometry(.035,.10,5),0x6b452c,
+      [s*.40+(k-1)*.065,.60,.55],[Math.PI/2,0,0]));
+    p.push(P(new THREE.CylinderGeometry(.155,.17,.36,9),FUR,[s*.42,.79,-.52]));
+  }
+  p.push(P(new THREE.SphereGeometry(.10,8,6),FUR3,[0,.95,-.95]));
+  p.push(P(new THREE.SphereGeometry(.15,10,8),0xff9a3c,[0,1.80,.52]));
+  p.push(P(leafGeo(.24,.13,.05,4),0x4fa86b,[0,1.93,.52],[-.3,.6,0]));
+  p.push(P(new THREE.TorusGeometry(.38,.075,8,20),col,[0,1.10,.42],[Math.PI/2,0,0]));
+  p.push(P(tubeGeo([[.20,1.06,.60],[.30,.88,.72],[.38,.72,.66]],.055,6),col));
+  p.push(P(leafGeo(.30,.16,.10,4),col,[.30,.86,.70],[1.2,.4,.3]));
+  return {parts:p,glow:gl};
+}
+function gunParts(col){
+  const p=[],MET=0x3a444e,DARK=0x222a32,WOOD=0x7a5436;
+  p.push(P(roundedBox(.24,.26,.62,.06,3),MET,[0,0,.12]));
+  p.push(P(roundedBox(.28,.14,.40,.05,3),WOOD,[0,-.02,-.34],[.18,0,0]));
+  p.push(P(roundedBox(.16,.30,.20,.05,3),DARK,[0,-.22,.10],[.25,0,0]));
+  p.push(P(roundedBox(.14,.22,.16,.04,2),MET,[0,-.16,.36]));
+  p.push(P(new THREE.CylinderGeometry(.075,.085,1.0,10),DARK,[0,.06,.72],[Math.PI/2,0,0]));
+  p.push(P(latheGeo([[.075,0],[.085,.04],[.125,.10],[.125,.17],[.090,.20]],12),MET,[0,.06,1.22],[Math.PI/2,0,0]));
+  for(let i=0;i<3;i++)p.push(P(new THREE.CylinderGeometry(.025,.025,.16,6),0x121820,
+    [0,.06,.52+i*.16],[0,0,Math.PI/2]));
+  p.push(P(roundedBox(.10,.10,.12,.02,2),DARK,[0,.22,.30]));
+  p.push(P(new THREE.CylinderGeometry(.025,.025,.12,6),MET,[0,.30,.30]));
+  p.push(P(new THREE.TorusGeometry(.10,.018,5,12,Math.PI),DARK,[0,-.18,.14],[0,Math.PI/2,0]));
+  p.push(P(roundedBox(.26,.06,.20,.02,2),col,[0,.16,.05]));
+  return p;
+}
+function makePlayerMesh(id){
+  const col=PCOLOR[id],g=new THREE.Group();
+  g.add(shadow(2.15,2));
+  g.add(modelGroup(hullParts(3.5,1.02,.66,{outer:0x6b4630,inner:0x4c3222,stern:0x5b3a27,
+    rim:0x8a5c39,waterline:0x3c2a20,nail:0xd8b47a,deckA:0xc49a63,deckB:0xb98b55,
+    bench:0x7d5738,keel:0x40291c}),[],{side:THREE.DoubleSide,rough:.86}));
+  // 以颈部为支点把水豚略微仰起：俯视镜头下五官更清楚
+  const pivot=new THREE.Group();pivot.position.set(0,1.20,.30);pivot.rotation.x=-.26;
+  const cp=capybaraParts(col);
+  const capModel=modelGroup(cp.parts,cp.glow,{rough:.88,outline:0x3b2718,ow:.026});
+  capModel.position.set(0,-1.20,-.30);pivot.add(capModel);
+  const gun=new THREE.Group();gun.position.set(.44,-.02,.30);
+  gun.add(modelGroup(gunParts(col),[],{rough:.52,metal:.38,outline:0x171e26,ow:.03}));
+  const flash=spriteGlow(0xffd18a,1.8,0);flash.position.set(0,.06,1.44);gun.add(flash);
+  pivot.add(gun);g.add(pivot);g.userData.flash=flash;g.userData.gun=gun;
+  const ring=new THREE.Mesh(new THREE.TorusGeometry(1.78,.05,6,44),
+    new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:.85}));
+  ring.rotation.x=-Math.PI/2;ring.position.y=.09;g.add(ring);g.userData.ring=ring;
+  const flag=gridGeo(6,3,(t,u)=>[t*.72,(u-.5)*.38,.10*Math.sin(t*7)*u]);
+  g.add(modelGroup([
+    P(new THREE.CylinderGeometry(.032,.04,1.6,6),0x4a3a2e,[-.62,.85,-.98]),
+    P(new THREE.SphereGeometry(.07,7,5),0xffd08a,[-.62,1.68,-.98]),
+    P(flag,col,[-.60,1.52,-.98])
+  ],[],{side:THREE.DoubleSide,rough:.8}));
+  const wake=new THREE.Mesh(wakeGeo(),new THREE.MeshBasicMaterial({color:0xdffaf4,
+    transparent:true,opacity:0,depthWrite:false,side:THREE.DoubleSide}));
+  wake.position.y=.07;g.add(wake);g.userData.wake=wake;
+  const dn=spriteGlow(0xff4d5e,3.4,0);dn.position.y=2.4;g.add(dn);g.userData.downGlow=dn;
+  g.scale.setScalar(1.18);
+  return g;
+}
+const playerMeshes=[];
+function ensurePlayerMeshes(n){
+  while(playerMeshes.length<n){
+    const i=playerMeshes.length,g=makePlayerMesh(i);scene.add(g);playerMeshes.push(g);
+  }
+  for(let i=0;i<playerMeshes.length;i++)playerMeshes[i].visible=i<n;
+}
+ensurePlayerMeshes(2);
+
+// 怪物
+function makeMonsterMesh(type){
+  const d=MON[type],g=new THREE.Group(),r=d.r,C=d.color,p=[],gl=[];
+  g.add(shadow(r*1.45,1));
+  if(type==='reef'){ // 礁甲兽：分层背甲、双颚獠牙、四足与尾鳍
+    p.push(P(deform(new THREE.SphereGeometry(1,16,12),v=>{
+      v.x*=r*.95;v.y*=r*.58;v.z*=r*1.15;v.z+=r*.12*Math.cos(v.x*3);
+    }),C,[0,.20,0]));
+    for(let i=0;i<3;i++){const z=-r*.6+i*r*.55;
+      p.push(P(gridGeo(6,8,(t,u)=>{const s=u*2-1;
+        return [s*r*.82*(1-.25*Math.abs(s)),.22+r*.52*Math.sin(Math.PI*t)*.75,z+(t-.5)*r*.5];}),shade(C,1.20)));}
+    p.push(P(roundedBox(r*1.1,r*.5,r*.7,r*.18,3),shade(C,1.28),[0,.24,r*.95]));
+    for(const s of [-1,1]){
+      p.push(P(new THREE.ConeGeometry(r*.17,r*.55,6),shade(C,.80),[s*r*.34,.15,r*1.42],[Math.PI/2,0,s*.2]));
+      for(let k=0;k<3;k++)p.push(P(new THREE.ConeGeometry(r*.045,r*.16,4),0xf3e6c8,
+        [s*r*(.26+k*.06),.02,r*1.58],[Math.PI/2,0,0]));
+    }
+    for(let i=0;i<5;i++)p.push(P(new THREE.ConeGeometry(r*.13,r*.5,5),shade(C,.62),
+      [(i-2)*r*.28,r*.62,-r*.7],[0,0,(i-2)*.12]));
+    for(const s of [-1,1])for(let i=0;i<2;i++){
+      const z=(-.45+i*.9)*r;
+      p.push(P(tubeGeo([[s*r*.7,.22,z],[s*r*1.15,.05,z+.12*r],[s*r*1.28,-.18,z+.28*r]],r*.085,6),shade(C,.78)));
+      p.push(P(new THREE.ConeGeometry(r*.09,r*.26,5),shade(C,.6),
+        [s*r*1.28,-.26,z+.28*r],[Math.PI/2,0,0]));
+    }
+    p.push(P(new THREE.ConeGeometry(r*.25,r*.9,7),shade(C,.85),[0,.16,-r*1.35],[-Math.PI/2,0,0]));
+    const tf=leafGeo(r*1.0,r*.9,r*.18,5);tf.rotateX(-1.0);
+    p.push(P(tf,shade(C,1.12),[0,.16,-r*1.72]));
+    for(const s of [-1,1]){
+      p.push(P(new THREE.TorusGeometry(r*.15,r*.045,6,12),shade(C,.5),[s*r*.36,.42,r*1.18]));
+      gl.push(P(new THREE.SphereGeometry(r*.105,9,7),d.eye,[s*r*.36,.43,r*1.22]));
+    }
+  }else if(type==='spitter'){ // 刺水母：伞盖沟纹、发光核、九条弯曲触手
+    p.push(P(deform(latheGeo([[0,.55],[.35,.52],[.72,.40],[.95,.18],[1.0,0],[.92,-.08]],18),
+      v=>{v.x*=r;v.z*=r;v.y*=r*1.1;}),C,[0,.42,0]));
+    p.push(P(new THREE.TorusGeometry(r*.96,r*.075,8,24),shade(C,1.28),[0,.36,0],[Math.PI/2,0,0]));
+    for(let i=0;i<8;i++){const a=i/8*6.28;
+      p.push(P(tubeGeo([[Math.cos(a)*r*.15,.42+r*.58,Math.sin(a)*r*.15],
+        [Math.cos(a)*r*.55,.42+r*.44,Math.sin(a)*r*.55],
+        [Math.cos(a)*r*.93,.36,Math.sin(a)*r*.93]],.022,5),shade(C,1.34)));}
+    for(let i=0;i<9;i++){const a=i/9*6.28;
+      p.push(P(tubeGeo([[Math.cos(a)*r*.85,.34,Math.sin(a)*r*.85],
+        [Math.cos(a)*r*1.15,-.15,Math.sin(a)*r*1.15],
+        [Math.cos(a+.3)*r*1.05,-.62,Math.sin(a+.3)*r*1.05],
+        [Math.cos(a+.5)*r*.85,-1.0,Math.sin(a+.5)*r*.85]],.045,6),shade(C,.92)));}
+    for(let i=0;i<4;i++){const a=i/4*6.28;
+      p.push(P(new THREE.ConeGeometry(r*.14,r*.5,5),shade(C,1.22),
+        [Math.cos(a)*r*.22,.05,Math.sin(a)*r*.22],[Math.PI,0,0]));}
+    gl.push(P(new THREE.SphereGeometry(r*.30,12,9),d.eye,[0,.42,0]));
+    for(let i=0;i<8;i++){const a=i/8*6.28;
+      gl.push(P(new THREE.SphereGeometry(r*.065,7,5),d.eye,[Math.cos(a)*r*.93,.40,Math.sin(a)*r*.93]));}
+  }else{ // 重甲巨蟹：宽甲缘、双钳、六足、四眼
+    p.push(P(deform(new THREE.SphereGeometry(1,20,14),v=>{
+      v.x*=r*1.05;v.y*=r*.52;v.z*=r*.92;v.y+=.06*r*Math.sin(v.x*4)*Math.cos(v.z*4);
+    }),C,[0,.30,0]));
+    for(let i=0;i<10;i++){const a=i/10*6.28;
+      p.push(P(roundedBox(r*.30,r*.16,r*.38,r*.06,2),shade(C,1.22),
+        [Math.cos(a)*r*.92,.34,Math.sin(a)*r*.84],[0,-a,0]));}
+    for(let i=0;i<6;i++){const a=i/6*6.28;
+      p.push(P(new THREE.SphereGeometry(r*.16,8,6),shade(C,.75),
+        [Math.cos(a)*r*.5,.30+r*.48,Math.sin(a)*r*.42]));}
+    for(const s of [-1,1]){
+      p.push(P(new THREE.CylinderGeometry(r*.15,r*.20,r*.72,8),shade(C,.85),
+        [s*r*1.05,.28,r*.55],[0,0,s*.7]));
+      p.push(P(deform(new THREE.SphereGeometry(1,12,9),v=>{v.x*=r*.34;v.y*=r*.26;v.z*=r*.42;}),
+        shade(C,1.16),[s*r*1.38,.36,r*1.05]));
+      for(let k=0;k<2;k++)p.push(P(new THREE.ConeGeometry(r*.10,r*.52,6),shade(C,.80),
+        [s*r*(1.32+k*.13),.36+(k?.12:-.10)*r,r*1.48],[Math.PI/2,0,s*.15]));
+    }
+    for(const s of [-1,1])for(let i=0;i<3;i++){
+      const z=(-.6+i*.55)*r;
+      p.push(P(tubeGeo([[s*r*.85,.25,z],[s*r*1.35,.02,z-.10*r],[s*r*1.48,-.28,z-.28*r]],r*.10,6),shade(C,.78)));
+      p.push(P(new THREE.ConeGeometry(r*.10,r*.28,5),shade(C,.6),
+        [s*r*1.48,-.36,z-.28*r],[Math.PI/2,0,0]));
+    }
+    for(const s of [-1,1])for(let k=0;k<2;k++){
+      p.push(P(new THREE.TorusGeometry(r*.10,r*.032,5,10),shade(C,.5),
+        [s*r*(.30+k*.26),.48,r*.86]));
+      gl.push(P(new THREE.SphereGeometry(r*.072,8,6),d.eye,[s*r*(.30+k*.26),.49,r*.90]));
+    }
+    for(let i=0;i<3;i++){const tf=leafGeo(r*.9,r*.6,r*.15,4);tf.rotateX(-1.1);tf.rotateY((i-1)*.4);
+      p.push(P(tf,shade(C,.92),[0,.30,-r*1.0]));}
+  }
+  g.add(modelGroup(p,gl,{rough:.68,metal:.14,side:THREE.DoubleSide,outline:0x141a20,ow:.032}));
+  const aura=spriteGlow(d.eye,r*2.0,.32);aura.position.set(0,.5,r*.7);g.add(aura);
+  const bar=new THREE.Group();bar.position.y=d.r*2+1.0;
+  const bg=new THREE.Mesh(new THREE.PlaneGeometry(1.6,.16),new THREE.MeshBasicMaterial({color:0x102028,depthTest:false}));
+  const fg=new THREE.Mesh(new THREE.PlaneGeometry(1.56,.12),new THREE.MeshBasicMaterial({color:0xff6b6b,depthTest:false}));
+  fg.position.z=.01;bar.add(bg,fg);g.add(bar);g.userData.bar=bar;g.userData.barFill=fg;
+  return g;
+}
+const monsterMeshes=new Map();
+/* 兴趣点 / 掉落物的可视模型 */
+const poiMeshes=new Map(),pickupMeshes=new Map();
+function makePOIMesh(q){
+  const g=new THREE.Group(),p=[],gl=[],c=POI_INFO[q.type].color;
+  if(q.type==='cache'){
+    p.push(P(roundedBox(1.5,1.0,1.2,.14,3),0x9a6d42,[0,.4,0]));
+    p.push(P(roundedBox(1.6,.12,1.3,.04,2),0x5f4128,[0,.95,0]));
+    p.push(P(new THREE.TorusGeometry(.42,.07,6,16),0xd9ab5e,[0,.4,.62]));
+    gl.push(P(new THREE.SphereGeometry(.14,8,6),0xffe6a2,[0,1.05,0]));
+  }else if(q.type==='rune'){
+    p.push(P(new THREE.OctahedronGeometry(.62,0),0x6a4c9c,[0,1.05,0]));
+    p.push(P(new THREE.TorusGeometry(.95,.07,6,24),0x8c6ad0,[0,1.05,0],[Math.PI/2,0,0]));
+    gl.push(P(new THREE.OctahedronGeometry(.28,0),0xd9b8ff,[0,1.05,0]));
+  }else if(q.type==='whirlpool'){
+    p.push(P(new THREE.CircleGeometry(2.5,32),0x123c52,[0,.05,0],[-Math.PI/2,0,0]));
+    for(let i=0;i<3;i++)p.push(P(new THREE.TorusGeometry(1.1+i*.62,.09,6,28),
+      i%2?0x7fd8e8:0x4aa8c4,[0,.08+i*.16,0],[Math.PI/2,0,0]));
+    gl.push(P(new THREE.SphereGeometry(.3,10,8),0xa8f0ff,[0,.5,0]));
+  }else if(q.type==='shrine'){
+    for(const s of [-1,1])p.push(P(new THREE.ConeGeometry(.42,2.3,6),0xc98aa8,[s*1.0,.9,0],[0,0,s*-.2]));
+    p.push(P(roundedBox(2.2,.4,.9,.16,3),0xd9a8bd,[0,1.95,0]));
+    gl.push(P(new THREE.SphereGeometry(.52,12,9),0xffb8de,[0,1.35,0]));
+    p.push(P(new THREE.TorusGeometry(.78,.09,6,20),0xffe0ee,[0,1.35,0]));
+  }else{ // wreck
+    p.push(P(roundedBox(3.2,.55,1.5,.16,2),0x6b4a32,[0,-.3,0],[0,.3,.12]));
+    p.push(P(new THREE.CylinderGeometry(.1,.14,3.0,7),0x5b3f2b,[.6,.9,.3],[0,0,.7]));
+    p.push(P(new THREE.TorusGeometry(.6,.08,6,14),0x8a7a60,[1.3,-.1,-.4],[0,Math.PI/2,0]));
+    gl.push(P(new THREE.SphereGeometry(.2,8,6),0xffd08a,[.2,.1,.8]));
+  }
+  g.add(modelGroup(p,gl,{rough:.7,side:THREE.DoubleSide,outline:0x241a22,ow:.02}));
+  const halo=spriteGlow(c,3.2,.55);halo.position.y=1.3;g.add(halo);
+  g.userData.halo=halo;return g;
+}
+function makePickupMesh(k){
+  const c={coin:0xffd277,heart:0xff7b7b,shield:0x7fd8e8,boost:0xff9a5a,speed:0x8ce8b0}[k.type]||0xffffff;
+  const g=new THREE.Group();
+  const core=k.type==='heart'
+    ?P(new THREE.SphereGeometry(.28,10,8),c,[0,.4,0],[0,0,0],[1,.9,.5])
+    :P(new THREE.OctahedronGeometry(.30,0),c,[0,.4,0]);
+  const p=[core,P(new THREE.TorusGeometry(.46,.045,5,16),c,[0,.4,0],[Math.PI/2,0,0])];
+  g.add(modelGroup(p,[],{rough:.45,metal:.25,side:THREE.DoubleSide}));
+  const s=spriteGlow(c,1.5,.7);s.position.y=.4;g.add(s);return g;
+}
+// 子弹
+const bulletMeshes=new Map();
+const bulletGeo=new THREE.SphereGeometry(.17,8,6);
+function makeBulletMesh(b){
+  const c=b.team==='p'?0xffe2a0:0xff5d7a;
+  const g=new THREE.Group();
+  g.add(new THREE.Mesh(bulletGeo,new THREE.MeshBasicMaterial({color:c})));
+  const s=spriteGlow(c,1.05,.7);g.add(s);
+  if(b.aoe){const s2=spriteGlow(0xff8c5a,2.2,.6);g.add(s2);}
+  g.position.y=.55;scene.add(g);return g;
+}
+// 流浪商船：多层船壳 / 船尾楼 / 栏杆 / 鼓帆 / 索具 / 桶箱货物 / 舷窗 / 灯笼
+function makeMerchant(){
+  const g=new THREE.Group(),p=[],gl=[];
+  g.add(shadow(5.0,2));
+  p.push(...hullParts(8.2,2.7,1.4,{outer:0x5c3b28,inner:0x40291c,stern:0x4a3020,
+    rim:0x8a5c39,waterline:0x33231a,nail:0xd8b47a,deckA:0xb98b57,deckB:0xa87b49,
+    bench:0x6d4a30,keel:0x332116}));
+  const WOOD=0x7a5436,DARK=0x3d2a1e,GOLD=0xd9ab5e;
+  p.push(P(roundedBox(3.0,1.05,1.7,.16,3),0x8a6039,[0,1.35,-2.75]));
+  p.push(P(roundedBox(3.2,.14,1.9,.05,2),WOOD,[0,1.92,-2.75]));
+  for(let i=0;i<4;i++)p.push(P(new THREE.CylinderGeometry(.07,.07,.5,6),GOLD,[-1.1+i*.73,2.15,-2.75]));
+  for(const s of [-1,1])for(let i=0;i<9;i++)
+    p.push(P(new THREE.CylinderGeometry(.045,.045,.62,5),WOOD,[s*2.05,.95,-3.3+i*.8]));
+  for(const s of [-1,1])
+    p.push(P(tubeGeo([[s*2.05,1.24,-3.3],[s*2.05,1.24,0],[s*2.05,1.24,3.1]],.045,6),DARK));
+  for(const s of [-1,1])for(let i=0;i<4;i++){
+    p.push(P(new THREE.TorusGeometry(.20,.055,6,14),GOLD,[s*2.42,.55,-1.7+i*1.1],[0,Math.PI/2,0]));
+    gl.push(P(new THREE.CylinderGeometry(.15,.15,.05,12),0x7fd8d0,
+      [s*2.44,.55,-1.7+i*1.1],[0,0,Math.PI/2]));
+  }
+  for(const [mz,mh] of [[.6,7.4],[-1.9,5.0]]){
+    p.push(P(new THREE.CylinderGeometry(.13,.19,mh,10),WOOD,[0,mh/2+.5,mz]));
+    p.push(P(new THREE.CylinderGeometry(.06,.06,4.2,7),DARK,[0,mh*.78,mz],[0,0,Math.PI/2]));
+    p.push(P(new THREE.SphereGeometry(.18,8,6),GOLD,[0,mh+.5,mz]));
+  }
+  const sail=(w,h,y,z)=>gridGeo(8,6,(t,u)=>{const s=u*2-1;
+    return [s*w*.5,y+(t-.5)*h,z+.55*Math.sin(Math.PI*t)*Math.cos(s*Math.PI/2)];});
+  p.push(P(sail(4.0,3.5,5.3,.62),0xfff0d2));
+  p.push(P(sail(2.8,2.3,3.9,-1.86),0xf6e2bd));
+  for(const [w,h,y,z] of [[4.0,.55,4.4,.72],[2.8,.40,3.3,-1.80]])
+    p.push(P(gridGeo(2,6,(t,u)=>{const s=u*2-1;
+      return [s*w*.5,y+(t-.5)*h,z+.54*Math.cos(s*Math.PI/2)];}),0xd9614e));
+  for(const s of [-1,1]){
+    p.push(P(tubeGeo([[0,7.8,.6],[s*1.1,4.2,.6],[s*2.0,1.2,.6]],.028,5),0x6b5238));
+    p.push(P(tubeGeo([[0,5.3,-1.9],[s*.9,3.4,-1.9],[s*1.9,1.2,-1.9]],.024,5),0x6b5238));
+    p.push(P(tubeGeo([[0,7.7,.6],[s*.5,5.4,-1.9],[0,4.9,-1.9]],.022,5),0x6b5238));
+  }
+  for(const [x,z] of [[-1.0,1.5],[1.1,1.7],[.2,2.2]]){
+    p.push(P(latheGeo([[.32,0],[.40,.22],[.42,.52],[.40,.82],[.32,1.0]],12),0x9a6d42,[x,.50,z]));
+    p.push(P(new THREE.TorusGeometry(.40,.035,5,12),0x4a3526,[x,.72,z],[Math.PI/2,0,0]));
+    p.push(P(new THREE.TorusGeometry(.40,.035,5,12),0x4a3526,[x,.95,z],[Math.PI/2,0,0]));
+  }
+  for(const [x,z] of [[-1.3,-.7],[1.4,-.5]]){
+    p.push(P(roundedBox(.85,.75,.85,.07,3),0x8c6440,[x,.95,z]));
+    p.push(P(roundedBox(.90,.07,.90,.02,2),0x5f4128,[x,1.35,z]));
+  }
+  for(const [x,z] of [[-.5,.2],[.9,.1]])
+    p.push(P(deform(new THREE.SphereGeometry(1,10,8),v=>{v.x*=.42;v.y*=.36;v.z*=.42;}),
+      0xc9b48a,[x,.86,z]));
+  p.push(P(new THREE.TorusGeometry(.30,.075,6,12),0x565f66,[2.55,.35,1.1],[0,Math.PI/2,0]));
+  p.push(P(new THREE.CylinderGeometry(.06,.06,1.0,6),0x565f66,[2.55,.85,1.1]));
+  p.push(P(gridGeo(6,3,(t,u)=>[t*1.1,(u-.5)*.52,.14*Math.sin(t*7)*u]),0xffd277,[0,7.9,.6]));
+  gl.push(P(new THREE.SphereGeometry(.26,10,8),0xffd18a,[0,1.85,3.2]));
+  gl.push(P(new THREE.SphereGeometry(.18,8,6),0xffd18a,[-1.7,1.6,-2.6]));
+  gl.push(P(new THREE.SphereGeometry(.18,8,6),0xffd18a,[1.7,1.6,-2.6]));
+  g.add(modelGroup(p,gl,{rough:.78,side:THREE.DoubleSide}));
+  const lamp=spriteGlow(0xffc06a,5.0,.9);lamp.position.set(0,1.9,3.2);g.add(lamp);
+  const light=new THREE.PointLight(0xffb45e,2.2,24);light.position.copy(lamp.position);g.add(light);
+  const ring=new THREE.Mesh(new THREE.RingGeometry(9.4,10.0,48),
+    new THREE.MeshBasicMaterial({color:0xffd277,transparent:true,opacity:.35,side:THREE.DoubleSide,depthWrite:false}));
+  ring.rotation.x=-Math.PI/2;ring.position.y=.07;g.add(ring);
+  g.visible=false;scene.add(g);return g;
+}
+const merchantMesh=makeMerchant();
+// 首领：甲壳头颅 / 獠牙口器 / 眼窝 / 背刺 / 胸口核心 / 八条带吸盘的分节触手
+function makeBoss(){
+  const g=new THREE.Group(),p=[],gl=[];
+  g.add(shadow(7.2,2));
+  const SK=0x5b3566,SK2=shade(SK,.66),SK3=0x95639a;
+  p.push(P(deform(new THREE.IcosahedronGeometry(4.0,3),v=>{
+    v.y*=.78;v.z*=1.12;const k=1+.05*Math.sin(v.x*1.7)*Math.cos(v.z*1.4);v.multiplyScalar(k);
+  }),SK,[0,.85,0]));
+  for(let i=0;i<9;i++){
+    const a=i/9*6.28;
+    const plate=gridGeo(5,6,(t,u)=>{const s=u*2-1;
+      return [s*1.15*(1-.25*Math.abs(s)),2.05+1.15*Math.sin(Math.PI*t),1.2+t*2.6];});
+    plate.rotateY(a);p.push(P(plate,i%2?SK3:0x7c4c84));
+    const vein=gridGeo(5,1,(t,u)=>[u*.10,2.10+1.12*Math.sin(Math.PI*t),1.35+t*2.4]);
+    vein.rotateY(a);gl.push(P(vein,0xff6a9a));
+  }
+  p.push(P(new THREE.TorusGeometry(2.55,.13,7,30),SK3,[0,2.35,0],[Math.PI/2,0,0]));
+  for(const s of [-1,1])p.push(P(roundedBox(1.9,.55,1.1,.22,3),SK2,[s*1.65,2.05,3.0],[0,0,s*-.18]));
+  for(const s of [-1,1]){
+    p.push(P(new THREE.TorusGeometry(.78,.20,8,20),SK2,[s*1.55,1.65,3.45]));
+    gl.push(P(new THREE.SphereGeometry(.60,14,10),0xff5a4e,[s*1.55,1.66,3.55]));
+    gl.push(P(new THREE.SphereGeometry(.19,9,7),0xffd0a0,[s*1.42,1.80,3.98]));
+  }
+  p.push(P(new THREE.SphereGeometry(1.55,14,10),0x140b16,[0,.42,3.35],[0,0,0],[1,.8,.6]));
+  p.push(P(new THREE.TorusGeometry(1.62,.34,8,26),SK2,[0,.48,3.55]));
+  for(let i=0;i<14;i++){const a=i/14*6.28;
+    p.push(P(new THREE.ConeGeometry(.16,.70,6),0xf1e2c4,
+      [Math.cos(a)*1.45,.48+Math.sin(a)*1.05,3.70],[0,0,a+Math.PI/2]));}
+  for(let i=0;i<8;i++){const a=i/8*6.28;
+    p.push(P(new THREE.ConeGeometry(.48,2.5,7),SK2,
+      [Math.cos(a)*2.9,2.9,Math.sin(a)*2.4],[Math.sin(a)*.35,0,-Math.cos(a)*.35]));
+    gl.push(P(new THREE.SphereGeometry(.14,7,5),0xff5a7a,[Math.cos(a)*3.25,4.05,Math.sin(a)*2.7]));}
+  p.push(P(new THREE.TorusGeometry(1.15,.22,8,24),SK3,[0,3.45,-.5],[Math.PI/2,0,0]));
+  gl.push(P(new THREE.SphereGeometry(.78,14,10),0xff6a55,[0,3.55,-.5]));
+  for(const s of [-1,1]){
+    const fin=leafGeo(4.2,2.3,.9,8);fin.rotateZ(s*Math.PI/2);fin.rotateY(s*.5);
+    p.push(P(fin,SK3,[s*3.4,.5,-.6]));
+  }
+  g.add(modelGroup(p,gl,{rough:.70,metal:.10,side:THREE.DoubleSide,outline:0x2b1730,ow:.022}));
+  const tents=[];
+  for(let i=0;i<8;i++){
+    const a=i/8*6.28,tg=new THREE.Group();
+    tg.position.set(Math.cos(a)*3.3,.25,Math.sin(a)*3.3);tg.rotation.y=-a;
+    let parent=tg;const piv=[];
+    for(let k=0;k<3;k++){
+      const pivot=new THREE.Group();pivot.position.y=k===0?0:1.75;
+      pivot.userData.base=k===0?.88:.30;
+      const sp=[],r0=.56-k*.13,r1=.46-k*.11;
+      sp.push(P(new THREE.CylinderGeometry(r1,r0,1.85,10),k%2?SK:shade(SK,1.2),[0,.92,0]));
+      for(let q=0;q<3;q++)sp.push(P(new THREE.TorusGeometry(r0-q*.03,.045,5,12),SK3,
+        [0,.35+q*.55,0],[Math.PI/2,0,0]));
+      for(let q=0;q<4;q++)sp.push(P(new THREE.SphereGeometry(.115,7,5),0xd88aae,
+        [0,.30+q*.42,-r0*.92],[0,0,0],[1,1,.45]));
+      sp.push(P(new THREE.ConeGeometry(r1,.4,8),SK2,[0,1.95,0]));
+      pivot.add(modelGroup(sp,[],{rough:.72,outline:0x2b1730,ow:.030}));
+      parent.add(pivot);parent=pivot;piv.push(pivot);
+    }
+    tg.userData.pivots=piv;g.add(tg);tents.push(tg);
+  }
+  g.userData.tents=tents;
+  const aura=spriteGlow(0xff4d6d,15,.35);aura.position.y=1.2;g.add(aura);
+  g.visible=false;scene.add(g);return g;
+}
+const bossMesh=makeBoss();
+
+// 准星
+{
+  const g=new THREE.Group();
+  const ring=new THREE.Mesh(new THREE.TorusGeometry(.62,.035,5,36),new THREE.MeshBasicMaterial({color:0xfff0d0,transparent:true,opacity:.9,depthTest:false}));
+  ring.rotation.x=-Math.PI/2;g.add(ring);
+  const dot=new THREE.Mesh(new THREE.SphereGeometry(.075,8,6),new THREE.MeshBasicMaterial({color:0xffb15c,depthTest:false}));g.add(dot);
+  for(let i=0;i<4;i++){
+    const t=new THREE.Mesh(new THREE.BoxGeometry(.035,.035,.24),new THREE.MeshBasicMaterial({color:0xfff0d0,depthTest:false}));
+    const a=i/4*6.28;t.position.set(Math.sin(a)*.82,.0,Math.cos(a)*.82);t.rotation.y=a;g.add(t);
+  }
+  g.position.y=.3;g.renderOrder=20;scene.add(g);window.__cross=g;
+}
+
+
+
+/* ================= fx.js ================= */
+/* fx.js —— 由 tools/split.mjs 生成后可自由编辑 */
+
+const particles=[],flashes=[];
+const partGeo=new THREE.SphereGeometry(.14,6,4);
+function spawnParticles(x,z,color,n,spd=4,y=.5){
+  for(let i=0;i<n;i++){
+    let m=particles.find(p=>!p.alive);
+    if(!m){if(particles.length>260)break;
+      m={mesh:new THREE.Mesh(partGeo,new THREE.MeshBasicMaterial({transparent:true,depthWrite:false})),alive:false};
+      scene.add(m.mesh);particles.push(m);}
+    const a=Math.random()*6.28,s=spd*(.35+Math.random());
+    m.alive=true;m.life=.35+Math.random()*.5;m.max=m.life;
+    m.vx=Math.cos(a)*s;m.vz=Math.sin(a)*s;m.vy=1.5+Math.random()*3.2;
+    m.mesh.position.set(x,y,z);m.mesh.material.color.setHex(color);m.mesh.material.opacity=1;
+    m.mesh.scale.setScalar(.6+Math.random()*.9);m.mesh.visible=true;
+  }
+}
+function spawnFlash(x,z,color,size=2){
+  const s=spriteGlow(color,size,.95);s.position.set(x,1.0,z);scene.add(s);
+  flashes.push({s,life:.16,max:.16,size});
+}
+let shake=0;
+function handleEvents(events){
+  for(const e of events){
+    switch(e.t){
+      case 'shot': {
+        if(NET.role==='client'&&e.id===NET.clientId)break; // 本地预测已放过特效
+        const wp=WEAPONS[e.w]||WEAPONS.pistol;
+        spawnFlash(e.x+e.dx*1.7,e.z+e.dz*1.7,wp.color,1.4+wp.recoil*.1);
+        spawnParticles(e.x-e.dx*1.4,e.z-e.dz*1.4,0xdffaf4,3,3,.2);
+        sfx(e.w==='cannon'?'boom':e.w==='shotgun'?'shot2':'shot');
+        break;}
+      case 'hit': spawnParticles(e.x,e.z,e.color||0xffd08a,4,3.5,.5);break;
+      case 'kill': spawnParticles(e.x,e.z,0xffd277,14,6,.5);spawnFlash(e.x,e.z,0xffd277,2.6);sfx('kill');break;
+      case 'hurt': spawnParticles(e.x,e.z,0xff5d6b,12,5,.8);shake=Math.max(shake,.5);sfx('hurt');
+        toast(teamName(e.id)+'受伤！','hot');break;
+      case 'down': spawnParticles(e.x,e.z,0xff4d5e,22,7,1);toast('⚠ '+teamName(e.id)+'倒地！快去救！','hot');sfx('down');break;
+      case 'revive': spawnParticles(e.x,e.z,0x8ce8b0,20,6,1);toast('💛 队友已救起！','hot');sfx('buy');break;
+      case 'buy': toast('🛒 '+teamName(e.id)+'买到了「'+e.name+'」','hot');sfx('buy');break;
+      case 'buyFail': {
+        const mine=NET.role==='client'?NET.clientId:0;
+        if(e.id===mine){toast('🛒 '+e.msg,'hot');sfx('hurt');}
+        break;
+      }
+      case 'merchant': toast('⛵ '+(e.name?e.name+' · ':'')+'商船靠港！看小地图找位置','hot');sfx('buy');break;
+      case 'merchantLeave': toast('⛵ 商船离港');break;
+      case 'ring': spawnParticles(e.x,e.z,0xff7a9a,16,8,1);break;
+      case 'slam': spawnFlash(e.x,e.z,0xff5a72,11);shake=.9;sfx('boom');break;
+      case 'boom': spawnFlash(e.x,e.z,0xff9a5a,4);spawnParticles(e.x,e.z,0xffb36b,12,7,.5);sfx('boom');break;
+      case 'victory': spawnParticles(e.x,e.z,0xffd277,60,14,2);shake=1.4;sfx('buy');break;
+      case 'defeat': sfx('down');break;
+      /* --- 探索 / 隐藏点 / 随机事件 --- */
+      case 'discover':
+        toast('🧭 发现「'+e.name+'」· 探索度提升 +4 ¢','hot');sfx('kill');break;
+      case 'loot': {
+        const mine=NET.role==='client'?NET.clientId:0;
+        if(e.id===mine){toast('✦ '+e.text,'hot');sfx('buy');}
+        break;
+      }
+      case 'rune':
+        spawnParticles(e.x,e.z,0xb98cff,26,8,1.2);spawnFlash(e.x,e.z,0xb98cff,4);
+        toast('◆ 深渊符文 '+e.n+'/3 · '+(e.n>=3?'首领被提前唤醒！':'继续寻找其余符文'),'hot');
+        sfx('boss');break;
+      case 'poiGone': spawnParticles(e.x,e.z,POI_INFO[e.kind]?POI_INFO[e.kind].color:0xffd277,16,6,.6);break;
+      case 'warp':
+        spawnFlash(e.x,e.z,0x7fd8e8,7);spawnParticles(e.tx,e.tz,0x7fd8e8,22,8,.6);
+        toast('🌀 漩涡把你送到了一片陌生海域','hot');sfx('buy');break;
+      case 'shield': spawnParticles(e.x,e.z,0x7fd8e8,12,5,.8);break;
+      case 'eventStart':
+        showEventBanner(e.name,e.desc,EVENT_INFO[e.type].color);
+        toast('⚡ 随机事件 · '+e.name+'：'+e.desc,'hot');sfx('boss');break;
+      case 'eventEnd': hideEventBanner();break;
+      case 'strike':
+        spawnFlash(e.x,e.z,e.type==='meteor'?0xff9a5a:0x9fd8ff,e.r*1.6);
+        spawnParticles(e.x,e.z,0xffe6a2,14,7,.5);shake=Math.max(shake,.55);sfx('boom');break;
+      case 'boss':
+        toast(e.early?'◆ 三枚符文集齐！深渊巨兽被提前唤醒，全队强化！':'🌑 深渊巨兽从海沟中升起！','hot');
+        shake=1.5;sfx('boss');break;
+    }
+  }
+}
+let actx=null;
+function sfx(kind){
+  try{
+    if(!actx)actx=new (window.AudioContext||window.webkitAudioContext)();
+    if(actx.state==='suspended')actx.resume();
+    const t=actx.currentTime,o=actx.createOscillator(),g=actx.createGain();
+    o.connect(g);g.connect(actx.destination);
+    let f=440,f2=180,dur=.1,type='square',vol=.05;
+    if(kind==='shot'){f=620;f2=180;dur=.08;}
+    else if(kind==='shot2'){f=330;f2=90;dur=.16;type='sawtooth';vol=.07;}
+    else if(kind==='boom'){f=150;f2=40;dur=.32;type='sawtooth';vol=.09;}
+    else if(kind==='kill'){f=520;f2=980;dur=.16;type='triangle';vol=.05;}
+    else if(kind==='hurt'){f=190;f2=70;dur=.22;type='sawtooth';vol=.07;}
+    else if(kind==='down'){f=260;f2=55;dur=.5;type='sawtooth';vol=.08;}
+    else if(kind==='buy'){f=660;f2=1180;dur=.28;type='sine';vol=.07;}
+    else if(kind==='boss'){f=90;f2=38;dur=1.1;type='sawtooth';vol=.11;}
+    o.type=type;o.frequency.setValueAtTime(f,t);o.frequency.exponentialRampToValueAtTime(Math.max(30,f2),t+dur);
+    g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+    o.start(t);o.stop(t+dur+.02);
+  }catch(_){}
+}
+function toast(msg,cls=''){
+  const d=document.createElement('div');d.className='toast '+cls;d.textContent=msg;
+  $('toasts').appendChild(d);setTimeout(()=>{d.style.opacity='0';d.style.transition='opacity .4s';
+    setTimeout(()=>d.remove(),420);},2200);
+}
+
+
+
+/* ================= input.js ================= */
+/* input.js —— 由 tools/split.mjs 生成后可自由编辑 */
+
+const keys={}, mouse={x:0,y:0,down:false,inside:false};
+let mouseWorld={x:0,z:0};
+const raycaster=new THREE.Raycaster(), aimPlane=new THREE.Plane(new THREE.Vector3(0,1,0),0);
+function readInput(){
+  const px=(keys.d?1:0)-(keys.a?1:0)+(keys.arrowright?1:0)-(keys.arrowleft?1:0);
+  const pz=(keys.s?1:0)-(keys.w?1:0)+(keys.arrowdown?1:0)-(keys.arrowup?1:0);
+  return {ax:mouseWorld.x,az:mouseWorld.z,fire:!!(mouse.down||keys[' ']),revive:!!keys.e,
+    px:clamp(px,-1,1),pz:clamp(pz,-1,1)};
+}
+function idleInput(p){return{ax:p.x,az:p.z,fire:false,revive:false,px:0,pz:0};}
+function aiInput(p,id){
+  let target=null,best=1e9;
+  for(const m of S.monsters){const d=hypot(m.x-p.x,m.z-p.z);if(d<best){best=d;target=m;}}
+  if(S.boss&&!S.boss.dead){const d=hypot(S.boss.x-p.x,S.boss.z-p.z)*.8;if(d<best){best=d;target=S.boss;}}
+  let ax=p.x+Math.sin(S.gameTime*.7+id)*12,az=p.z+Math.cos(S.gameTime*.7+id)*12,
+      fire=false,px=0,pz=0,revive=false;
+  let mate=null,md=1e9;
+  for(const q of S.players){
+    if(q===p||!q.downed)continue;
+    const d=hypot(q.x-p.x,q.z-p.z);if(d<md){md=d;mate=q;}
+  }
+  if(mate&&md>2.4){
+    ax=p.x-(mate.x-p.x)/md*16;az=p.z-(mate.z-p.z)/md*16;fire=true;
+    px=(mate.x-p.x)/md*.6;pz=(mate.z-p.z)/md*.6;
+  }else if(mate){revive=true;}
+  else if(target){
+    ax=target.x;az=target.z;fire=best<34;
+    if(best<8){px=-(target.x-p.x)/(best||1);pz=-(target.z-p.z)/(best||1);}
+  }
+  if(S.merchant.active&&S.coins>=70&&!target)fire=false;
+  return {ax,az,fire,revive,px,pz};
+}
+function hostInputs(){
+  const a=[];
+  for(let i=0;i<S.players.length;i++){
+    if(i===0){a.push(readInput());S.aiActive[i]=false;continue;}
+    if(!S.seats[i]){S.aiActive[i]=true;a.push(aiInput(S.players[i],i));continue;}
+    const r=S.remoteInputs[i]||{inp:null,tick:0,at:0};
+    const age=performance.now()-(r.at||0);
+    if(age>3000){S.aiActive[i]=true;a.push(aiInput(S.players[i],i));continue;}
+    S.aiActive[i]=false;
+    if(!r.inp){a.push(idleInput(S.players[i]));continue;}
+    const stale=age>700;
+    a.push({...r.inp,fire:stale?false:r.inp.fire,revive:stale?false:r.inp.revive});
+  }
+  return a;
+}
+
+
+
+/* ================= sim.js ================= */
+/* sim.js —— 由 tools/split.mjs 生成后可自由编辑 */
+
+function stepPlayerMotion(p,input,dt){
+  p.fireCd=Math.max(0,(p.fireCd||0)-dt);
+  p.invuln=Math.max(0,(p.invuln||0)-dt);
+  let dx=(input.ax||0)-p.x, dz=(input.az||0)-p.z;
+  const l=hypot(dx,dz)||1; dx/=l; dz/=l;
+  p.aim=Math.atan2(dx,dz);
+  const wp=WEAPONS[p.weapon]||WEAPONS.pistol;
+  let shot=null;
+  if(input.fire&&p.fireCd<=0&&!p.downed){
+    p.fireCd=1/wp.rate;
+    const imp=wp.recoil*(p.recoilMul||1)*(p.thrust||1);
+    p.vx-=dx*imp; p.vz-=dz*imp;
+    shot={wp,dx,dz};
+  }
+  p.vx+=(input.px||0)*3.0*dt; p.vz+=(input.pz||0)*3.0*dt;
+  p.vx+=(p.curX||0)*dt; p.vz+=(p.curZ||0)*dt;    // 随机洋流
+  p.warpCd=Math.max(0,(p.warpCd||0)-dt);
+  const damp=Math.exp(-1.75*dt);
+  p.vx*=damp;p.vz*=damp;
+  const sp=hypot(p.vx,p.vz),max=p.downed?2:12.5;
+  if(sp>max){p.vx*=max/sp;p.vz*=max/sp;}
+  p.x+=p.vx*dt;p.z+=p.vz*dt;
+  // 圆形航区边界
+  const rr=hypot(p.x,p.z);
+  if(rr>ARENA){const nx=p.x/(rr||1),nz=p.z/(rr||1);
+    p.x=nx*ARENA;p.z=nz*ARENA;
+    const dot=p.vx*nx+p.vz*nz;if(dot>0){p.vx-=dot*nx*1.5;p.vz-=dot*nz*1.5;}}
+  // 岛群 / 礁石
+  for(const o of OBSTACLES){
+    const ox=p.x-o.x,oz=p.z-o.z,d=hypot(ox,oz),lim=o.r+1.0;
+    if(d<lim){const nx=ox/(d||1),nz=oz/(d||1);p.x=o.x+nx*lim;p.z=o.z+nz*lim;
+      const dot=p.vx*nx+p.vz*nz;if(dot<0){p.vx-=dot*nx*1.5;p.vz-=dot*nz*1.5;}}
+  }
+  return shot;
+}
+
+/* ------------------------------ 主机模拟 --------------------------------- */
+function spawnBullets(p,shot){
+  const {wp,dx,dz}=shot;
+  for(let i=0;i<wp.pellets;i++){
+    const a=Math.atan2(dx,dz)+(Math.random()-.5)*wp.spread*2;
+    const vx=Math.sin(a)*wp.speed+p.vx*.3, vz=Math.cos(a)*wp.speed+p.vz*.3;
+    S.bullets.push({id:S.nextId++,team:'p',owner:p.id,x:p.x+Math.sin(a)*1.5,z:p.z+Math.cos(a)*1.5,
+      vx,vz,life:wp.life,dmg:wp.dmg*(p.dmgMul||1)*(p.power||1),pierce:p.pierce||0,aoe:wp.aoe||0,
+      r:wp.aoe?.7:.34,hit:[]});
+  }
+  S.events.push({t:'shot',id:p.id,x:p.x,z:p.z,dx,dz,w:p.weapon});
+}
+function enemyBullet(x,z,vx,vz,dmg,life,r){
+  S.bullets.push({id:S.nextId++,team:'e',x,z,vx,vz,life,dmg,pierce:0,aoe:0,r:r||.45,hit:[]});
+}
+function spawnMonster(type,x,z){
+  const d=MON[type];
+  const hp=d.hp*(1+S.wave*.055);
+  const m={id:S.nextId++,type,x,z,vx:0,vz:0,angle:0,hp,maxHp:hp,r:d.r,cd:1+Math.random()*2,dead:false,bonus:false};
+  S.monsters.push(m);return m;
+}
+function spawnWaveMonster(){
+  const t=S.gameTime;
+  let type='reef';
+  const r=Math.random();
+  if(t>40&&r>.82)type='brute'; else if(t>22&&r>.58)type='spitter';
+  const p=S.players[Math.floor(Math.random()*S.players.length)]||S.players[0];
+  let x,z,tries=0;
+  do{const a=Math.random()*6.28,rad=26+Math.random()*16;
+     x=clamp(p.x+Math.cos(a)*rad,-ARENA+5,ARENA-5);
+     z=clamp(p.z+Math.sin(a)*rad,-ARENA+5,ARENA-5);tries++;}
+  while(tries<14&&(!inArena(x,z,4)||OBSTACLES.some(o=>hypot(x-o.x,z-o.z)<o.r+4)));
+  // 地貌影响怪物强度：海沟更凶险
+  const ci=cellOf(x,z),bi=ci>=0?WORLD.cells[ci].biome:'shoal';
+  const m=spawnMonster(type,x,z);
+  if(m&&(bi==='trench'||bi==='thorn')){m.hp*=1.35;m.maxHp=m.hp;m.bonus=true;}
+}
+function hurtPlayer(p,amount,reason){
+  if(p.downed||p.dead||p.invuln>0)return;
+  if(p.shield>0){p.shield--;p.invuln=.9;
+    S.events.push({t:'shield',id:p.id,x:p.x,z:p.z});return;}
+  p.hearts-=amount;p.invuln=.95;
+  S.events.push({t:'hurt',id:p.id,x:p.x,z:p.z,reason});
+  if(p.hearts<=0){p.hearts=0;p.downed=true;p.revive=0;S.events.push({t:'down',id:p.id,x:p.x,z:p.z});}
+}
+function damageMonster(m,dmg,p){
+  m.hp-=dmg;S.events.push({t:'hit',x:m.x,z:m.z,color:MON[m.type].color});
+  if(m.hp<=0&&!m.dead){
+    m.dead=true;
+    const reward=Math.round(MON[m.type].coin*(m.bonus?2:1)*((S.event&&S.event.type==='swarm')?2:1));
+    S.coins+=reward;S.kills++;
+    if(p)p.kills++;
+    // 掉落：越凶险的怪越容易掉道具
+    if(Math.random()<(m.bonus?.55:.26)){
+      const roll=Math.random();
+      pushPickup(roll<.42?'coin':roll<.62?'heart':roll<.78?'shield':roll<.90?'boost':'speed',m.x,m.z,10+reward);
+    }
+    S.events.push({t:'kill',x:m.x,z:m.z,coin:MON[m.type].color});
+  }
+}
+function updateMerchant(dt){
+  const m=S.merchant;
+  // 随机事件「幽灵商船」临时占据商船
+  if(S.event&&S.event.type==='ghost'){
+    if(!m.ghost){
+      m.ghost=true;m.active=true;m.x=S.event.x;m.z=S.event.z;m.name='幽灵商船';m.portId=-1;
+      S.events.push({t:'merchant',x:m.x,z:m.z,name:m.name});
+    }
+    m.timeLeft=S.event.timeLeft;m.next=0;return;
+  }
+  if(m.ghost){m.ghost=false;m.active=false;m.name='';S.events.push({t:'merchantLeave'});}
+  let active=false,left=0;
+  for(const [a,b] of MERCH_WINDOWS){if(S.gameTime>=a&&S.gameTime<b){active=true;left=b-S.gameTime;break;}}
+  if(active&&!m.active){
+    // 每班换个港口：优先已探索、离队伍较近的，逼着你把地图跑开
+    let pick=null,best=1e9;
+    for(const q of S.ports){
+      if(q.id===m.portId)continue;
+      const d=Math.min(...S.players.map(p=>hypot(p.x-q.x,p.z-q.z)));
+      const score=d+(S.explored[cellOf(q.x,q.z)]?0:55);
+      if(score<best){best=score;pick=q;}
+    }
+    if(pick){m.x=pick.x;m.z=pick.z;m.portId=pick.id;m.name=pick.name;}
+    S.events.push({t:'merchant',x:m.x,z:m.z,name:m.name});
+  }
+  if(!active&&m.active)S.events.push({t:'merchantLeave'});
+  m.active=active;m.timeLeft=left;
+  let nxt=Infinity;
+  for(const [a] of MERCH_WINDOWS)if(a>S.gameTime){nxt=a;break;}
+  m.next=nxt===Infinity?0:nxt-S.gameTime;
+}
+function buy(playerId,itemId){
+  // 任何拒绝都回传原因，避免界面「点了没反应」
+  const fail=msg=>{S.events.push({t:'buyFail',id:playerId,msg});return msg;};
+  if(S.phase!=='playing')return fail('本局已结束');
+  if(!S.merchant.active)return fail('商船已离港，等下一班吧');
+  const p=S.players[playerId];if(!p)return fail('玩家不存在');
+  if(p.downed)return fail('倒地状态下不能交易');
+  // 主机比客户端宽松 2m，抵消预测/权威位置误差
+  if(hypot(p.x-S.merchant.x,p.z-S.merchant.z)>SHOP_RANGE+2)return fail('离商船太远了，靠近一点');
+  const it=SHOP.find(i=>i.id===itemId);if(!it)return fail('商品不存在');
+  if(S.coins<it.cost)return fail(`贝壳币不足 · 还差 ${it.cost-S.coins} ¢`);
+  S.coins-=it.cost;
+  if(it.kind==='weapon')p.weapon=it.val;
+  else if(itemId==='dmg')p.dmgMul=+(p.dmgMul+.25).toFixed(2);
+  else if(itemId==='recoil')p.recoilMul=+(p.recoilMul+.22).toFixed(2);
+  else if(itemId==='pierce')p.pierce++;
+  else if(itemId==='hull'){p.maxHearts=Math.min(8,p.maxHearts+1);p.hearts=Math.min(p.maxHearts,p.hearts+2);}
+  S.events.push({t:'buy',id:playerId,item:it.id,name:it.name});
+}
+function summonBoss(early){
+  // 在队伍附近浮出，保证登场瞬间就在镜头内
+  let cx=0,cz=0;for(const p of S.players){cx+=p.x;cz+=p.z;}
+  cx/=S.players.length;cz/=S.players.length;
+  const bx=clamp(cx+(Math.random()-.5)*9,-ARENA+7,ARENA-7);
+  const bz=clamp(cz+12,-ARENA+7,ARENA-7);
+  S.boss={id:S.nextId++,x:bx,z:bz,vx:0,vz:0,angle:0,hp:early?1250:1500,maxHp:early?1250:1500,
+    r:4.6,ring:2.6,summon:6,slam:8,phase:1,dead:false,t:0};
+  if(early)for(const p of S.players){
+    p.maxHearts=Math.min(9,p.maxHearts+1);p.hearts=p.maxHearts;p.shield=Math.max(p.shield,2);}
+  S.events.push({t:'boss',x:bx,z:bz,early:!!early});
+}
+
+/* ===================== 探索 / 隐藏点 / 拾取 / 随机事件 ===================== */
+function pushPickup(type,x,z,value){
+  S.pickups.push({id:S.nextId++,type,x:clamp(x+(Math.random()-.5)*2.4,-ARENA+3,ARENA-3),
+    z:clamp(z+(Math.random()-.5)*2.4,-ARENA+3,ARENA-3),value:value||8,life:80});
+}
+function applyPickup(p,k){
+  if(k.type==='coin'){S.coins+=k.value||8;S.events.push({t:'loot',id:p.id,text:'+'+(k.value||8)+' ¢'});}
+  else if(k.type==='heart'){p.hearts=Math.min(p.maxHearts,p.hearts+1);S.events.push({t:'loot',id:p.id,text:'+1 ♥ 船体修复'});}
+  else if(k.type==='shield'){p.shield=3;S.events.push({t:'loot',id:p.id,text:'护盾 ×3'});}
+  else if(k.type==='boost'){p.power=1.8;p.powerT=18;S.events.push({t:'loot',id:p.id,text:'双倍火力 18 秒'});}
+  else if(k.type==='speed'){p.thrust=1.7;p.thrustT=18;S.events.push({t:'loot',id:p.id,text:'超载推进 18 秒'});}
+}
+function updatePickups(dt){
+  for(let i=S.pickups.length-1;i>=0;i--){
+    const k=S.pickups[i];k.life-=dt;
+    if(k.life<=0){S.pickups.splice(i,1);continue;}
+    for(const p of S.players){
+      if(p.downed)continue;
+      if(hypot(p.x-k.x,p.z-k.z)<2.9){applyPickup(p,k);S.pickups.splice(i,1);break;}
+    }
+  }
+}
+function updateExploration(){
+  for(const p of S.players){
+    if(p.downed)continue;
+    const ci=cellOf(p.x,p.z);
+    if(ci<0||S.explored[ci])continue;
+    S.explored[ci]=1;S.exploreCount++;S.coins+=4;
+    for(const q of S.pois)if(q.cell===ci)q.revealed=true;
+    const bi=WORLD.cells[ci]?WORLD.cells[ci].biome:'shoal';
+    S.events.push({t:'discover',id:p.id,cell:ci,x:p.x,z:p.z,name:BIOME_INFO[bi].name});
+  }
+}
+function openCache(q,p){
+  const r=Math.random();
+  if(r<.30)for(let i=0;i<3;i++)pushPickup('coin',q.x,q.z,14);
+  else if(r<.50)pushPickup('heart',q.x,q.z);
+  else if(r<.68)pushPickup('shield',q.x,q.z);
+  else if(r<.84)pushPickup(r<.77?'boost':'speed',q.x,q.z);
+  else{p.weapon=['shotgun','smg','cannon'][Math.floor(Math.random()*3)];
+    S.events.push({t:'loot',id:p.id,text:'稀有武器 · '+WEAPONS[p.weapon].name});}
+  S.coins+=6;
+  S.events.push({t:'poiGone',id:q.id,x:q.x,z:q.z,kind:'cache'});
+}
+function updatePOIs(dt,inputs){
+  for(let i=S.pois.length-1;i>=0;i--){
+    const q=S.pois[i];if(q.found){S.pois.splice(i,1);continue;}
+    let p=null,best=1e9;
+    for(const pl of S.players){if(pl.downed)continue;const d=hypot(pl.x-q.x,pl.z-q.z);if(d<best){best=d;p=pl;}}
+    if(!p)continue;
+    if(q.type==='cache'&&best<3.4){q.found=true;openCache(q,p);continue;}
+    if(q.type==='rune'&&best<3.4){
+      q.found=true;S.runes++;S.coins+=25;
+      S.events.push({t:'rune',id:p.id,x:q.x,z:q.z,n:S.runes});
+      if(S.runes>=3&&!S.boss&&!S.bossDead)summonBoss(true);
+      S.events.push({t:'poiGone',id:q.id,x:q.x,z:q.z,kind:'rune'});continue;
+    }
+    if(q.type==='whirlpool'&&best<4.2&&(p.warpCd||0)<=0){
+      let ci=-1,t=0;
+      do{ci=Math.floor(Math.random()*GRID*GRID);t++;}while(t<40&&S.explored[ci]);
+      const c=cellCenter(ci>=0?ci:0);
+      p.x=clamp(c.x,-ARENA+8,ARENA-8);p.z=clamp(c.z,-ARENA+8,ARENA-8);
+      p.vx*=.3;p.vz*=.3;p.warpCd=22;p.invuln=2.2;
+      S.events.push({t:'warp',id:p.id,x:q.x,z:q.z,tx:p.x,tz:p.z});
+      q.found=true;S.events.push({t:'poiGone',id:q.id,x:q.x,z:q.z,kind:'whirlpool'});continue;
+    }
+    if(q.type==='wreck'||q.type==='shrine'){
+      const using=inputs[p.id]&&inputs[p.id].revive;
+      if(best<4.6&&using){
+        p.dig=(p.dig||0)+dt;p.digId=q.id;
+        const need=q.type==='wreck'?2.2:1.2;
+        if(p.dig>=need){
+          p.dig=0;
+          if(q.type==='shrine'&&S.coins<30){
+            S.events.push({t:'loot',id:p.id,text:'神龛需要 30 ¢ 供奉'});p.dig=.6;continue;
+          }
+          q.found=true;
+          if(q.type==='wreck'){
+            const r=Math.random();
+            if(r<.42)for(let k=0;k<4;k++)pushPickup('coin',q.x,q.z,20);
+            else if(r<.68){pushPickup('heart',q.x,q.z);pushPickup('shield',q.x,q.z);}
+            else if(r<.86){pushPickup('boost',q.x,q.z);pushPickup('speed',q.x,q.z);}
+            else for(let k=0;k<3;k++)spawnMonster('brute',q.x+(Math.random()-.5)*9,q.z+(Math.random()-.5)*9);
+            S.events.push({t:'loot',id:p.id,text:r<.86?'沉船打捞成功！':'惊动了沉睡的守卫！'});
+          }else{
+            S.coins-=30;const r=Math.random();
+            if(r<.40){p.maxHearts=Math.min(9,p.maxHearts+1);p.hearts=p.maxHearts;
+              S.events.push({t:'loot',id:p.id,text:'神龛赐福 · 心上限 +1 且回满'});}
+            else if(r<.72){p.dmgMul=+(p.dmgMul+.5).toFixed(2);
+              S.events.push({t:'loot',id:p.id,text:'神龛赐福 · 永久伤害 +50%'});}
+            else{p.weapon='cannon';p.pierce++;
+              S.events.push({t:'loot',id:p.id,text:'神龛赐福 · 深水重炮 + 穿甲'});}
+          }
+          S.events.push({t:'poiGone',id:q.id,x:q.x,z:q.z,kind:q.type});
+        }
+      }else if(p.digId===q.id)p.dig=Math.max(0,(p.dig||0)-dt*.8);
+    }
+  }
+}
+function startRandomEvent(){
+  const type=EVENT_KEYS[Math.floor(Math.random()*EVENT_KEYS.length)];
+  const p=S.players[Math.floor(Math.random()*S.players.length)]||S.players[0];
+  const a=Math.random()*6.28,rad=24+Math.random()*22;
+  const x=clamp(p.x+Math.cos(a)*rad,-ARENA+14,ARENA-14);
+  const z=clamp(p.z+Math.sin(a)*rad,-ARENA+14,ARENA-14);
+  S.event={id:S.nextId++,type,x,z,timeLeft:26,elapsed:0,strike:0,cx:0,cz:0};
+  S.eventTimer=38+Math.random()*20;
+  S.events.push({t:'eventStart',type,x,z,name:EVENT_INFO[type].name,desc:EVENT_INFO[type].desc});
+  if(type==='treasure'){
+    for(let i=0;i<9;i++){
+      const ang=Math.random()*6.28,rr=Math.random()*28;
+      const qx=clamp(x+Math.cos(ang)*rr,-ARENA+8,ARENA-8),qz=clamp(z+Math.sin(ang)*rr,-ARENA+8,ARENA-8);
+      S.pois.push({id:S.nextId++,type:'cache',x:qx,z:qz,cell:cellOf(qx,qz),
+        found:false,revealed:true,spin:Math.random()*6.28});
+    }
+  }else if(type==='swarm'){
+    for(let i=0;i<11;i++){
+      const m=spawnMonster(i%4===0?'brute':(i%3===0?'spitter':'reef'),
+        x+(Math.random()-.5)*22,z+(Math.random()-.5)*22);
+      if(m)m.bonus=true;
+    }
+  }else if(type==='current'){
+    const dir=Math.random()*6.28;S.event.cx=Math.cos(dir)*4.6;S.event.cz=Math.sin(dir)*4.6;
+  }else if(type==='reveal')S.revealT=26;
+}
+function endEvent(){
+  const e=S.event;if(!e)return;
+  for(const p of S.players){p.curX=0;p.curZ=0;}
+  S.revealT=0;
+  S.events.push({t:'eventEnd',type:e.type,name:EVENT_INFO[e.type].name});
+  S.event=null;
+}
+function updateEvent(dt){
+  if(!S.event){
+    S.eventTimer-=dt;
+    if(S.eventTimer<=0)startRandomEvent();
+    return;
+  }
+  const e=S.event;e.elapsed+=dt;e.timeLeft-=dt;
+  if(e.type==='current')for(const p of S.players){p.curX=e.cx;p.curZ=e.cz;}
+  if(e.type==='storm'||e.type==='meteor'){
+    e.strike+=dt;
+    if(e.strike>2.0){
+      e.strike=0;
+      const tp=S.players[Math.floor(Math.random()*S.players.length)]||S.players[0];
+      const sx=clamp(tp.x+(Math.random()-.5)*18,-ARENA+5,ARENA-5);
+      const sz=clamp(tp.z+(Math.random()-.5)*18,-ARENA+5,ARENA-5);
+      S.events.push({t:'strike',x:sx,z:sz,r:5.5,type:e.type});
+      for(const p of S.players)if(!p.downed&&hypot(p.x-sx,p.z-sz)<5.5)hurtPlayer(p,1,'雷击');
+      for(let i=0;i<3;i++)pushPickup('coin',sx,sz,16);
+    }
+  }
+  if(e.type==='bloom'){
+    for(const p of S.players){
+      if(p.downed)continue;
+      let near=false;
+      for(const t of THORNS)if(hypot(p.x-t.x,p.z-t.z)<t.r+7){near=true;break;}
+      if(near){p.healT=(p.healT||0)+dt;if(p.healT>2.4){p.healT=0;
+        p.hearts=Math.min(p.maxHearts,p.hearts+1);
+        S.events.push({t:'loot',id:p.id,text:'荆棘花蜜 · +1 ♥'});}}
+    }
+  }
+  if(e.timeLeft<=0)endEvent();
+}
+function updateBuffs(dt){
+  for(const p of S.players){
+    if(p.powerT>0){p.powerT-=dt;if(p.powerT<=0)p.power=1;}
+    if(p.thrustT>0){p.thrustT-=dt;if(p.thrustT<=0)p.thrust=1;}
+  }
+  S.revealT=Math.max(0,S.revealT-dt);
+}
+function simulateHost(dt){
+  if(S.phase!=='playing')return;
+  S.tick++;S.gameTime+=dt;
+  S.wave=1+Math.floor(S.gameTime/24);
+  const inputs=hostInputs();
+  for(let i=0;i<S.players.length;i++)
+    S.acks[i]=i===0?S.tick:(S.remoteInputs[i]?.tick||0);
+  for(const p of S.players){
+    const shot=stepPlayerMotion(p,inputs[p.id],dt);
+    if(shot)spawnBullets(p,shot);
+  }
+  // 救援：任意未倒地队友靠近并按住 E 都可扶起
+  for(const p of S.players){
+    if(!p.downed)continue;
+    let near=false;
+    for(const q of S.players){
+      if(q===p||q.downed||q.dead)continue;
+      if(inputs[q.id]&&inputs[q.id].revive&&hypot(q.x-p.x,q.z-p.z)<3.8){near=true;break;}
+    }
+    p.revive=clamp(p.revive+(near?dt:-dt*.7),0,2.5);
+    if(p.revive>=2.5){p.downed=false;p.revive=0;p.hearts=Math.min(p.maxHearts,2);p.invuln=1.5;
+      S.events.push({t:'revive',id:p.id,x:p.x,z:p.z});}
+  }
+  const down=S.players.filter(p=>p.downed).length;
+  S.bothDown=down===S.players.length?S.bothDown+dt:0;
+  if(S.bothDown>3){S.phase='defeat';S.events.push({t:'defeat'});}
+
+  // 探索 / 隐藏点 / 拾取 / 增益 / 随机事件
+  updateBuffs(dt);
+  updateExploration();
+  updatePOIs(dt,inputs);
+  updatePickups(dt);
+  updateEvent(dt);
+  updateMerchant(dt);
+  // 刷怪
+  if(!S.boss){
+    S.spawnTimer-=dt;
+    if(S.spawnTimer<=0){
+      const count=1+Math.floor(S.wave/4);
+      for(let i=0;i<count;i++)spawnWaveMonster();
+      S.spawnTimer=Math.max(.62,2.15-S.wave*.10);
+    }
+  }
+  if(!S.boss&&!S.bossDead&&S.gameTime>=BOSS_TIME)summonBoss(false);
+
+  // 子弹
+  for(let i=S.bullets.length-1;i>=0;i--){
+    const b=S.bullets[i];b.x+=b.vx*dt;b.z+=b.vz*dt;b.life-=dt;
+    if(b.life<=0||hypot(b.x,b.z)>ARENA+10){S.bullets.splice(i,1);continue;}
+    let hit=false;
+    if(b.team==='p'){
+      for(const m of S.monsters){
+        if(m.dead||b.hit.includes(m.id))continue;
+        if(hypot(m.x-b.x,m.z-b.z)<m.r+b.r){hit=true;b.hit.push(m.id);damageMonster(m,b.dmg,S.players[b.owner]);if(!b.aoe&&b.pierce<=0)break;}
+      }
+      if(S.boss&&!S.boss.dead&&hypot(S.boss.x-b.x,S.boss.z-b.z)<S.boss.r+b.r&&!b.hit.includes(S.boss.id)){
+        hit=true;b.hit.push(S.boss.id);S.boss.hp-=b.dmg;S.events.push({t:'hit',x:b.x,z:b.z,color:0xff8c5a});
+      }
+      if(hit&&b.aoe){
+        for(const m of S.monsters)if(!m.dead&&hypot(m.x-b.x,m.z-b.z)<b.aoe)damageMonster(m,b.dmg*.55,S.players[b.owner]);
+        S.events.push({t:'boom',x:b.x,z:b.z,r:b.aoe});S.bullets.splice(i,1);continue;
+      }
+      if(hit){ if(b.pierce>0)b.pierce--; else {S.bullets.splice(i,1);continue;} }
+    }else{
+      for(const p of S.players){
+        if(p.downed||p.invuln>0)continue;
+        if(hypot(p.x-b.x,p.z-b.z)<1.0+b.r){hurtPlayer(p,1,'远程');S.bullets.splice(i,1);hit=true;break;}
+      }
+      if(hit)continue;
+    }
+  }
+  S.monsters=S.monsters.filter(m=>!m.dead);
+
+  // 怪物 AI
+  for(const m of S.monsters){
+    const def=MON[m.type];
+    let target=null,best=1e9;
+    for(const p of S.players){if(p.downed||p.dead)continue;const d=hypot(p.x-m.x,p.z-m.z);if(d<best){best=d;target=p;}}
+    if(!target)continue;
+    const dx=target.x-m.x,dz=target.z-m.z,d=dx*dx+dz*dz||1;
+    // 轻微分离
+    let sx=0,sz=0;
+    for(const o of S.monsters){if(o===m)continue;const ox=m.x-o.x,oz=m.z-o.z,od=hypot(ox,oz);
+      if(od<.01||od>m.r+o.r+1)continue;sx+=ox/(od*od);sz+=oz/(od*od);}
+    const spd=def.speed*(m.type==='brute'?.9+S.wave*.01:1);
+    m.vx=(dx/Math.sqrt(d))*spd+sx*.9;m.vz=(dz/Math.sqrt(d))*spd+sz*.9;
+    if(m.type==='spitter'&&best<14){
+      m.vx*=.28;m.vz*=.28;m.cd-=dt;
+      if(m.cd<=0){m.cd=2.4;const a=Math.atan2(dz,dx);
+        enemyBullet(m.x,m.z,Math.cos(a)*9.5,Math.sin(a)*9.5,1,2.4,.42);
+        S.events.push({t:'spit',x:m.x,z:m.z});}
+    }
+    m.x+=m.vx*dt;m.z+=m.vz*dt;
+    m.angle=Math.atan2(m.vx,m.vz);
+    // 荆棘阻挡怪物
+    for(const t of THORNS){const ox=m.x-t.x,oz=m.z-t.z,dd=hypot(ox,oz);
+      if(dd<t.r+m.r){m.x=t.x+ox/(dd||1)*(t.r+m.r);m.z=t.z+oz/(dd||1)*(t.r+m.r);}}
+    if(best<def.r+1.0)hurtPlayer(target,def.dmg,'近身');
+  }
+  // 荆棘伤害玩家（「荆棘开花」事件期间停火）
+  const bloom=S.event&&S.event.type==='bloom';
+  for(const p of S.players){
+    if(p.downed||bloom)continue;
+    for(const t of THORNS){const d=hypot(p.x-t.x,p.z-t.z);
+      if(d<t.r+1.05){hurtPlayer(p,1,'荆棘');const nx=(p.x-t.x)/(d||1),nz=(p.z-t.z)/(d||1);
+        p.x=t.x+nx*(t.r+1.1);p.z=t.z+nz*(t.r+1.1);p.vx+=nx*2;p.vz+=nz*2;break;}}
+  }
+  // 首领
+  if(S.boss&&!S.boss.dead){
+    const b=S.boss;b.t+=dt;
+    let tx=0,tz=0,n=0;for(const p of S.players){tx+=p.x;tz+=p.z;n++;}tx/=n;tz/=n;
+    const a=Math.atan2(tx-b.x,tz-b.z);
+    const spd=b.phase===2?1.7:1.15;
+    b.vx=Math.sin(a)*spd;b.vz=Math.cos(a)*spd;b.x+=b.vx*dt;b.z+=b.vz*dt;b.angle=a;
+    if(b.hp<b.maxHp*.5)b.phase=2;
+    const rate=b.phase===2?.68:1;
+    b.ring-=dt;b.summon-=dt;b.slam-=dt;
+    if(b.ring<=0){b.ring=3.6*rate;const cnt=b.phase===2?18:12;
+      for(let i=0;i<cnt;i++){const ang=i/cnt*Math.PI*2+b.t*.4;
+        enemyBullet(b.x,b.z,Math.sin(ang)*10,Math.cos(ang)*10,1,4,.5);}
+      S.events.push({t:'ring',x:b.x,z:b.z});}
+    if(b.summon<=0){b.summon=9*rate;for(let i=0;i<3;i++)
+      spawnMonster(i===2?'spitter':'reef',b.x+(Math.random()-.5)*10,b.z+(Math.random()-.5)*10);}
+    if(b.slam<=0){b.slam=7*rate;S.events.push({t:'slam',x:b.x,z:b.z,r:10});
+      for(const p of S.players)if(!p.downed&&hypot(p.x-b.x,p.z-b.z)<10)hurtPlayer(p,1,'冲击波');}
+    if(b.hp<=0){b.dead=true;S.bossDead=true;S.phase='victory';S.events.push({t:'victory',x:b.x,z:b.z});}
+  }
+  // 事件：主机本地立即播放一次，同时转存给客户端快照
+  if(S.events.length){
+    handleEvents(S.events);
+    S.pendingEvents.push(...S.events);
+    S.events=[];
+  }
+}
+
+
+
+/* ================= snapshot.js ================= */
+/* snapshot.js —— 由 tools/split.mjs 生成后可自由编辑 */
+
+function makeSnapshot(){
+  return {
+    type:'snap',tick:S.tick,gameTime:S.gameTime,wave:S.wave,phase:S.phase,
+    players:S.players.map(p=>({...p})),
+    bullets:S.bullets.map(b=>({...b,hit:undefined})),
+    monsters:S.monsters.map(m=>({...m})),
+    boss:S.boss?{...S.boss}:null,
+    merchant:{...S.merchant},coins:S.coins,kills:S.kills,bossDead:S.bossDead,
+    worldSeed:S.worldSeed,explored:S.explored,exploreCount:S.exploreCount,
+    ports:S.ports,pois:S.pois,pickups:S.pickups,event:S.event,eventTimer:S.eventTimer,
+    runes:S.runes,revealT:S.revealT,
+    seats:S.seats,aiActive:S.aiActive,members:S.members,hostUid:S.hostUid,
+    acks:[...S.acks],events:S.pendingEvents.splice(0),rtt:NET.rtt
+  };
+}
+function sendSnapshot(){
+  const snap=makeSnapshot();
+  NET.snapCount++;
+  netSend(snap);
+}
+function applySnapshot(snap){
+  NET.prevSnap=NET.lastSnap;NET.lastSnap=snap;NET.snapAt=performance.now();
+  NET.snapCount++;
+  if(snap.rtt!=null&&NET.role==='client')NET.rtt=snap.rtt;
+  // 世界种子变化时重建静态地形（合作双方看到同一张地图）
+  if(snap.worldSeed!=null&&snap.worldSeed!==NET.worldSeed){
+    NET.worldSeed=snap.worldSeed;buildWorld(snap.worldSeed);
+  }
+  const srv=snap.players[NET.clientId];
+  if(srv){
+    // 和解误差 = 收到权威状态前，本地预测位置与服务器位置的偏差
+    if(NET.pred)NET.predErr=hypot(NET.pred.x-srv.x,NET.pred.z-srv.z);
+    const pred={x:srv.x,z:srv.z,vx:srv.vx,vz:srv.vz,aim:srv.aim,fireCd:srv.fireCd,
+      weapon:srv.weapon,recoilMul:srv.recoilMul,pierce:srv.pierce,downed:srv.downed,
+      invuln:srv.invuln,thrust:srv.thrust||1,curX:srv.curX||0,curZ:srv.curZ||0,
+      warpCd:srv.warpCd||0};
+    // 回滚到权威状态，再重放未确认输入
+    const ack=(snap.acks&&snap.acks[NET.clientId]!=null)?snap.acks[NET.clientId]:snap.tick;
+    const start=Math.max(ack+1,NET.clientTick-180);
+    for(let t=start;t<=NET.clientTick;t++){
+      const inp=NET.inputHistory.get(t)||NET.lastInput;
+      if(inp)stepPlayerMotion(pred,inp,STEP);
+    }
+    NET.pred=pred;
+    const cutoff=NET.clientTick-240;
+    for(const k of NET.inputHistory.keys())if(k<cutoff)NET.inputHistory.delete(k);
+  }
+  if(snap.events&&snap.events.length)handleEvents(snap.events);
+}
+function delayed(fn,ms){ if(ms<=0)fn(); else setTimeout(fn,ms); }
+
+
+
+/* ================= msg.js ================= */
+/* msg.js —— 由 tools/split.mjs 生成后可自由编辑 */
+
+function broadcastRoom(){
+  netSend({type:'room',members:NET.members,host:NET.uid,
+    phase:NET.role==='host'?S.phase:NET.roomPhase});
+}
+function onNetMessage(m){
+  if(m.room!==NET.room)return;
+  if(NET.role==='host'){
+    if(m.type==='hello'){
+      let mem=NET.members.find(x=>x.uid===m.from);
+      if(!mem){
+        const taken=NET.members.filter(x=>!x.spectator&&x.seat>=0).map(x=>x.seat);
+        let seat=-1;
+        for(let i=0;i<MAX_SEATS;i++)if(!taken.includes(i)){seat=i;break;}
+        const spectator=S.phase!=='lobby'||seat<0||NET.members.length>=MAX_ROOM;
+        mem={uid:m.from,name:String(m.name||'玩家').slice(0,16),
+          seat:spectator?-1:seat,spectator};
+        NET.members.push(mem);
+        toast(mem.name+' 加入房间'+(spectator?' · 观战':''),'hot');
+      }
+      S.members=NET.members;
+      netSend({type:'welcome',to:m.from,id:mem.seat,spectator:mem.spectator,
+        host:NET.uid,members:NET.members,phase:S.phase,tick:S.tick,
+        worldSeed:S.worldSeed,seats:S.seats,n:S.players.length});
+      broadcastRoom();renderWait();
+      // 开局后加入的人直接进观战
+      if(S.phase==='playing')netSend({type:'start',worldSeed:S.worldSeed,
+        seats:S.seats,n:S.players.length,members:S.members,phase:'playing'});
+    }else if(m.type==='bye'){
+      NET.members=NET.members.filter(x=>x.uid!==m.from);
+      S.members=NET.members;broadcastRoom();renderWait();
+    }else if(m.type==='input'){
+      const seat=S.seats.indexOf(m.from);
+      if(seat>0&&(!m.tick||m.tick>=(S.remoteInputs[seat]?.tick||0)))
+        S.remoteInputs[seat]={tick:m.tick,inp:m.inp,at:performance.now()};
+    }else if(m.type==='cmd'){
+      const seat=S.seats.indexOf(m.from);
+      if(m.cmd==='buy'&&seat>=0)buy(seat,m.item);
+      else if(m.cmd==='reset'&&(m.from===NET.uid||seat>=0))resetGame();
+      else if(m.cmd==='lobby'&&(m.from===NET.uid||seat>=0))backToLobby();
+      else if(m.cmd==='fast')S.gameTime=Math.min(BOSS_TIME-.1,S.gameTime+m.val);
+    }else if(m.type==='pong'){NET.rtt=Math.round(performance.now()-m.t);}
+  }else if(NET.role==='client'){
+    if(m.type==='welcome'){
+      if(m.to&&m.to!==NET.uid)return;
+      NET.clientId=m.id??-1;NET.spectator=!!m.spectator;
+      NET.connected=true;NET.hostUid=m.host;NET.members=m.members||[];
+      NET.roomPhase=m.phase||'lobby';
+      if(m.worldSeed!=null&&m.worldSeed!==NET.worldSeed){
+        NET.worldSeed=m.worldSeed;buildWorld(m.worldSeed);
+      }
+      NET.clientTick=(m.tick||0)+6;
+      NET.pred=NET.spectator?null:{x:6,z:8,vx:0,vz:0,aim:0,fireCd:0,weapon:'pistol',
+        recoilMul:1,pierce:0,downed:false,invuln:0,thrust:1,curX:0,curZ:0,warpCd:0};
+      $('btnJoin').textContent='加入房间 · 另一台设备';
+      renderWait();
+      toast(NET.spectator?'👀 已加入房间 · 观战席位':'已加入房间 · '+(NET.clientId+1)+'P','hot');
+    }else if(m.type==='room'){
+      NET.members=m.members||[];NET.hostUid=m.host||NET.hostUid;
+      NET.roomPhase=m.phase||'lobby';renderWait();
+    }else if(m.type==='start'||m.type==='reset'){
+      startGame(m);
+    }else if(m.type==='lobby'){
+      NET.members=m.members||[];NET.hostUid=m.host||NET.hostUid;
+      NET.roomPhase='lobby';S=makeState();
+      $('end').classList.add('hidden');$('wait').classList.remove('hidden');
+      renderWait();toast('已返回候船厅','hot');
+    }else if(m.type==='bye'){
+      if(m.from===NET.hostUid){
+        toast('房主已离开房间','hot');leaveRoom();
+      }else{
+        NET.members=NET.members.filter(x=>x.uid!==m.from);renderWait();
+      }
+    }else if(m.type==='snap'){
+      delayed(()=>applySnapshot(m),NET.latency/2);
+    }else if(m.type==='ping'){netSend({type:'pong',t:m.t});}
+  }
+}
+
+
+
+/* ================= view.js ================= */
+/* view.js —— 由 tools/split.mjs 生成后可自由编辑 */
+
+function interpArray(cur,prev,alpha){
+  if(!cur)return[];
+  if(!prev)return cur;
+  const pm=new Map(prev.map(o=>[o.id,o]));
+  return cur.map(c=>{
+    const p=pm.get(c.id);if(!p)return c;
+    const o={...c};
+    for(const k of ['x','z','angle','hp','vx','vz'])if(typeof p[k]==='number'&&typeof c[k]==='number')o[k]=lerp(p[k],c[k],alpha);
+    return o;
+  });
+}
+function viewState(){
+  if(NET.role==='client'){
+    if(!NET.lastSnap)return S;
+    const a=clamp((performance.now()-NET.snapAt)/50,0,1);
+    const L=NET.lastSnap,P=NET.prevSnap;
+    return {
+      ...L,
+      players:interpArray(L.players,P?P.players:null,a),
+      monsters:interpArray(L.monsters,P?P.monsters:null,a),
+      bullets:interpArray(L.bullets,P?P.bullets:null,a),
+      boss:L.boss
+    };
+  }
+  return S;
+}
+function syncEntities(V,dt,now){
+  // 玩家（席位数量随房间人数变化）
+  const np=(V.players||[]).length;
+  ensurePlayerMeshes(np);
+  for(let i=0;i<np;i++){
+    const g=playerMeshes[i];
+    let x,z,aim,vx,vz,downed,revive,weapon;
+    if(NET.role==='client'&&i===NET.clientId&&NET.pred){
+      x=NET.pred.x;z=NET.pred.z;aim=NET.pred.aim;vx=NET.pred.vx;vz=NET.pred.vz;
+      const vp=V.players[i]||{};downed=vp.downed;revive=vp.revive;weapon=vp.weapon;
+      g.position.x=lerp(g.position.x,x,1-Math.exp(-18*dt));
+      g.position.z=lerp(g.position.z,z,1-Math.exp(-18*dt));
+    }else{
+      const p=V.players[i];if(!p)continue;
+      x=p.x;z=p.z;aim=p.aim;vx=p.vx;vz=p.vz;downed=p.downed;revive=p.revive;weapon=p.weapon;
+      g.position.x=lerp(g.position.x,x,1-Math.exp(-16*dt));
+      g.position.z=lerp(g.position.z,z,1-Math.exp(-16*dt));
+    }
+    g.position.y=.10+Math.sin(now*1.9+i)*.06;
+    g.rotation.y=lerp(g.rotation.y,aim,1-Math.exp(-13*dt));
+    g.rotation.z=Math.sin(now*1.3+i)*.035;
+    const sp=hypot(vx,vz);
+    g.userData.wake.material.opacity=clamp(sp*.028,0,.30);
+    g.userData.wake.scale.set(1,1,clamp(sp*.12,.5,1.8));
+    g.userData.ring.material.opacity=downed?.25:.85;
+    g.userData.downGlow.material.opacity=downed?.55+Math.sin(now*5)*.2:0;
+    g.userData.downGlow.scale.setScalar(downed?3.4:1);
+    const fl=g.userData.flash;
+    fl.material.opacity=Math.max(0,fl.material.opacity-dt*9);
+    const muzzleScale=weapon==='cannon'?1.5:1;fl.scale.set(1.8*muzzleScale,1.8*muzzleScale,1);
+    g.userData.revive=revive;
+  }
+  // 怪物
+  const seen=new Set();
+  const mlist=V.monsters||[];
+  for(const m of mlist){
+    seen.add(m.id);
+    let g=monsterMeshes.get(m.id);
+    if(!g){g=makeMonsterMesh(m.type);scene.add(g);monsterMeshes.set(m.id,g);}
+    g.position.set(m.x,.15+Math.sin(now*2+m.id)*.10,m.z);
+    g.rotation.y=m.angle||0;
+    const f=clamp((m.hp||0)/(m.maxHp||1),0,1);
+    g.userData.barFill.scale.x=Math.max(.001,f);
+    g.userData.barFill.position.x=-(1-f)*.78;
+    g.userData.bar.quaternion.copy(camera.quaternion);
+  }
+  for(const [id,g] of monsterMeshes)if(!seen.has(id)){scene.remove(g);monsterMeshes.delete(id);}
+  // 子弹
+  const bseen=new Set();
+  for(const b of (V.bullets||[])){
+    bseen.add(b.id);let g=bulletMeshes.get(b.id);
+    if(!g){g=makeBulletMesh(b);bulletMeshes.set(b.id,g);}
+    g.position.set(b.x,.55,b.z);
+    g.rotation.y=Math.atan2(b.vx,b.vz);
+    g.children[0].scale.set(1,1,clamp(hypot(b.vx,b.vz)*.035,1,2.4));
+  }
+  for(const [id,g] of bulletMeshes)if(!bseen.has(id)){scene.remove(g);bulletMeshes.delete(id);}
+  // 兴趣点：只有已探索格（或海雾散去）才显露，未知海域保持神秘
+  const poiSeen=new Set(),showAll=!!(V.revealT>0);
+  for(const q of (V.pois||[])){
+    const ci=q.cell>=0?q.cell:cellOf(q.x,q.z);
+    const visible=showAll||(ci>=0&&V.explored&&V.explored[ci])||q.revealed&&ci>=0&&V.explored&&V.explored[ci];
+    if(!visible)continue;
+    poiSeen.add(q.id);
+    let g=poiMeshes.get(q.id);
+    if(!g){g=makePOIMesh(q);scene.add(g);poiMeshes.set(q.id,g);}
+    g.position.set(q.x,.1+Math.sin(now*1.3+q.spin)*.12,q.z);
+    g.rotation.y=now*.35+q.spin;
+    if(g.userData.halo)g.userData.halo.material.opacity=.4+Math.sin(now*2.5+q.spin)*.2;
+  }
+  for(const [id,g] of poiMeshes)if(!poiSeen.has(id)){scene.remove(g);poiMeshes.delete(id);}
+  // 掉落物
+  const pkSeen=new Set();
+  for(const k of (V.pickups||[])){
+    pkSeen.add(k.id);
+    let g=pickupMeshes.get(k.id);
+    if(!g){g=makePickupMesh(k);scene.add(g);pickupMeshes.set(k.id,g);}
+    g.position.set(k.x,.1+Math.sin(now*2.6+k.id)*.16,k.z);
+    g.rotation.y=now*1.6;
+  }
+  for(const [id,g] of pickupMeshes)if(!pkSeen.has(id)){scene.remove(g);pickupMeshes.delete(id);}
+  // 商船
+  const mer=V.merchant;
+  merchantMesh.visible=!!mer&&mer.active;
+  if(merchantMesh.visible){
+    merchantMesh.position.set(mer.x,.1+Math.sin(now*.9)*.09,mer.z);
+    merchantMesh.rotation.y=Math.sin(now*.35)*.06+.4;
+  }
+  // 首领
+  const b=V.boss;
+  bossMesh.visible=!!b&&!b.dead&&V.phase==='playing';
+  if(bossMesh.visible){
+    bossMesh.position.set(b.x,.2+Math.sin(now*1.1)*.18,b.z);
+    bossMesh.rotation.y=b.angle||0;
+    bossMesh.userData.tents.forEach((t,i)=>{
+      t.userData.pivots.forEach((p,k)=>{
+        p.rotation.z=(p.userData.base||0)+Math.sin(now*1.5+i*.8+k*.7)*(.18+k*.08);});
+    });
+  }
+  // 准星
+  window.__cross.position.set(mouseWorld.x,.32,mouseWorld.z);
+  window.__cross.rotation.y=now*.5;
+}
+function updateDecor(now){
+  const gm=window.__grass;
+  for(let i=0;i<grassData.length;i++){
+    const d=grassData[i];
+    dummy.position.set(d.x,-2.5,d.z);
+    dummy.rotation.set(Math.sin(now*1.2+d.ph)*.14,d.rot,Math.cos(now*.9+d.ph)*.14);
+    dummy.scale.set(d.s,d.s,d.s);dummy.updateMatrix();gm.setMatrixAt(i,dummy.matrix);
+  }
+  gm.instanceMatrix.needsUpdate=true;
+  const fm=window.__fish;
+  for(let i=0;i<fishData.length;i++){
+    const f=fishData[i];f.a+=f.sp*.012;
+    const x=f.cx+Math.cos(f.a)*f.r,z=f.cz+Math.sin(f.a)*f.r*.65;
+    dummy.position.set(x,f.y+Math.sin(now*1.4+f.ph)*.18,z);
+    dummy.rotation.set(0,-f.a+(f.sp>0?Math.PI/2:-Math.PI/2),Math.sin(now*3+f.ph)*.12);
+    dummy.scale.setScalar(f.s);dummy.updateMatrix();fm.setMatrixAt(i,dummy.matrix);
+  }
+  fm.instanceMatrix.needsUpdate=true;
+}
+function updateParticles(dt){
+  for(const p of particles){
+    if(!p.alive)continue;
+    p.life-=dt;
+    if(p.life<=0){p.alive=false;p.mesh.visible=false;continue;}
+    p.vy-=9*dt;
+    p.mesh.position.x+=p.vx*dt;p.mesh.position.y+=p.vy*dt;p.mesh.position.z+=p.vz*dt;
+    if(p.mesh.position.y<.1){p.mesh.position.y=.1;p.vy*=-.3;p.vx*=.7;p.vz*=.7;}
+    p.mesh.material.opacity=clamp(p.life/p.max,0,1);
+  }
+  for(let i=flashes.length-1;i>=0;i--){
+    const f=flashes[i];f.life-=dt;
+    if(f.life<=0){scene.remove(f.s);f.s.material.dispose();flashes.splice(i,1);continue;}
+    const k=f.life/f.max;f.s.material.opacity=k;f.s.scale.setScalar(f.size*(1.6-k*.6));
+  }
+}
+function myView(V){
+  if(NET.role==='client'&&NET.spectator)
+    return (V.players&&V.players[0])||{x:0,z:0};
+  const id=NET.role==='client'?NET.clientId:0;
+  const p=(V.players&&V.players[id])||{x:0,z:0};
+  if(NET.role==='client'&&NET.pred)return {...p,x:NET.pred.x,z:NET.pred.z,vx:NET.pred.vx,vz:NET.pred.vz};
+  return p;
+}
+let camFocus=new THREE.Vector3(0,0,0);
+function updateCamera(V,dt){
+  const me=myView(V),list=V.players||[];
+  let sx=0,sz=0,gap=0;
+  for(const p of list){sx+=p.x;sz+=p.z;gap=Math.max(gap,hypot(p.x-me.x,p.z-me.z));}
+  const n=list.length||1,cx=sx/n,cz=sz/n;
+  // 默认把所有船一起框住；拉开太远时才逐渐偏向自己
+  const bias=clamp((gap-18)/30,0,.45);
+  let tx=lerp(cx,me.x,bias),tz=lerp(cz,me.z,bias);
+  // 首领登场时把镜头拉开并一起框住巨兽，避免它躲进 HUD 面板后面
+  const boss=V.boss&&!V.boss.dead?V.boss:null;
+  if(boss){tx=lerp(tx,boss.x,.40);tz=lerp(tz,boss.z,.40);}
+  camFocus.x=lerp(camFocus.x,tx,1-Math.exp(-4*dt));
+  camFocus.z=lerp(camFocus.z,tz,1-Math.exp(-4*dt));
+  const h=26+clamp(gap*.22,0,9)+(boss?7:0);
+  const desired=new THREE.Vector3(camFocus.x,h,camFocus.z+h*.62);
+  camera.position.lerp(desired,1-Math.exp(-3.2*dt));
+  if(shake>0){
+    camera.position.x+=(Math.random()-.5)*shake*.6;
+    camera.position.y+=(Math.random()-.5)*shake*.4;
+    shake=Math.max(0,shake-dt*2.2);
+  }
+  camera.lookAt(camFocus.x,0,camFocus.z-1.5);
+}
+
+
+
+/* ================= hud.js ================= */
+/* hud.js —— 由 tools/split.mjs 生成后可自由编辑 */
+
+let uiAt=0,shopOpen=false,shopSig='',lastPhase='lobby',bannerUntil=0;
+function showEventBanner(name,desc,color){
+  const el=$('eventBanner');
+  el.style.display='block';el.style.borderColor=color;
+  $('evName').textContent='⚡ '+name;$('evName').style.color=color;
+  $('evDesc').textContent=desc;
+  bannerUntil=performance.now()+6500;
+}
+function hideEventBanner(){$('eventBanner').style.display='none';bannerUntil=0;}
+function seatLabel(V,i){
+  if(V.aiActive&&V.aiActive[i])return 'AI';
+  if(NET.role==='client')return i===NET.clientId?'你':(i===0?'主机':'联机');
+  if(NET.role==='host')return i===0?'主机':'联机';
+  return i===0?'你':'AI';
+}
+function compass(dx,dz){
+  const a=((Math.atan2(dx,-dz)*180/Math.PI)+360)%360;
+  return ['北','东北','东','东南','南','西南','西','西北'][Math.round(a/45)%8];
+}
+function heartHtml(p){
+  let s='';
+  for(let i=0;i<p.maxHearts;i++)s+=`<span class="${i<p.hearts?'':'off'}" style="color:${i<p.hearts?'#ff7b7b':'#fff'}">♥</span>`;
+  return s;
+}
+function updateHUD(V,now){
+  if(!V)return;
+  const t=V.gameTime||0;
+  $('waveNum').textContent=V.wave||1;
+  $('timer').textContent=String(Math.floor(t/60)).padStart(2,'0')+':'+String(Math.floor(t%60)).padStart(2,'0');
+  const mi=$('merchantInfo');
+  if(V.merchant&&V.merchant.active)mi.textContent=`商船在港 ${Math.ceil(V.merchant.timeLeft)}s`;
+  else if(V.merchant&&V.merchant.next>0)mi.textContent=`商船 ${Math.ceil(V.merchant.next)}s`;
+  else if(t<BOSS_TIME)mi.textContent=`首领 ${Math.ceil(BOSS_TIME-t)}s`;
+  else mi.textContent='首领战';
+  $('coinNum').textContent=V.coins||0;$('killNum').textContent=V.kills||0;
+  // 探索 / 符文 / 增益 / 随机事件
+  const exp=V.exploreCount||0,total=GRID*GRID,me0=myView(V);
+  $('expPct').textContent=Math.round(exp/total*100)+'%';
+  $('expFill').style.width=(exp/total*100)+'%';
+  $('runeNum').textContent=(V.runes||0)+' / 3';
+  let far=1e9,nearUnknown=null;
+  for(const q of (V.pois||[])){
+    const ci=q.cell>=0?q.cell:cellOf(q.x,q.z);
+    if(ci>=0&&V.explored&&V.explored[ci])continue;
+    const d=hypot((me0.x||0)-q.x,(me0.z||0)-q.z);
+    if(d<far){far=d;nearUnknown=q;}
+  }
+  $('clueTxt').textContent=nearUnknown
+    ?`${compass(nearUnknown.x-(me0.x||0),nearUnknown.z-(me0.z||0))} ${Math.round(far)}m 有信号`
+    :'海图已探明';
+  const p0=V.players[NET.role==='client'?NET.clientId:0]||{},bs=[];
+  if(p0.shield>0)bs.push('🛡 护盾 ×'+p0.shield);
+  if(p0.powerT>0)bs.push('✦ 双倍火力 '+Math.ceil(p0.powerT)+'s');
+  if(p0.thrustT>0)bs.push('↯ 超载推进 '+Math.ceil(p0.thrustT)+'s');
+  if(V.event&&V.event.type==='bloom')bs.push('🌸 荆棘开花');
+  if(V.merchant&&V.merchant.ghost)bs.push('⛵ 幽灵商船');
+  $('buffs').innerHTML=bs.map(x=>`<span class="buff">${x}</span>`).join('');
+  if(V.event){
+    const info=EVENT_INFO[V.event.type],el=$('eventBanner');
+    el.style.display='block';el.style.borderColor=info.color;
+    $('evName').textContent='⚡ '+info.name+' · '+Math.ceil(V.event.timeLeft)+'s';
+    $('evName').style.color=info.color;$('evDesc').textContent=info.desc;
+  }else if(performance.now()>bannerUntil)hideEventBanner();
+  const bossOn=!!V.boss&&!V.boss.dead&&V.phase==='playing';
+  $('bossWrap').style.display=bossOn?'block':'none';
+  if(bossOn)$('bossBar').style.width=clamp(V.boss.hp/V.boss.maxHp*100,0,100)+'%';
+  $('team').innerHTML=(V.players||[]).map((p,i)=>`
+    <div class="pcard">
+      <div class="avatar" style="color:${PHEX[i]}">🦫</div>
+      <div class="pinfo">
+        <div class="pname"><span style="color:${PHEX[i]}">${(i+1)+'P '+teamName(i)}</span>
+          <span>${seatLabel(V,i)}</span></div>
+        <div class="hearts">${heartHtml(p)}</div>
+        <div class="wp ${p.downed?'downed':''}">${p.downed?'✖ 倒地 · 等待救援 '+Math.round((p.revive||0)/2.5*100)+'%':(WEAPONS[p.weapon]||WEAPONS.pistol).name+' · 伤害×'+(p.dmgMul||1).toFixed(2)+' · 推力×'+(p.recoilMul||1).toFixed(2)}</div>
+      </div>
+    </div>`).join('');
+  // 提示
+  const me=myView(V),myId=NET.role==='client'?NET.clientId:0;
+  const mate=(V.players||[]).find(p=>p.id!==myId&&p.downed)||{};
+  const pr=$('prompt');
+  if(NET.spectator){pr.style.display='block';pr.textContent='👀 观战中 · 跟随 1P 视角，不参与操控';}
+  else if(mate.downed){
+    const d=hypot((me.x||0)-(mate.x||0),(me.z||0)-(mate.z||0));
+    pr.style.display='block';
+    pr.textContent=d<3.8?`按住 E 救起队友 · ${Math.round((mate.revive||0)/2.5*100)}%`:`队友倒地！距离 ${d.toFixed(0)}m · 朝反方向开火冲过去`;
+  }else{
+    let nearQ=null,qd=1e9;
+    for(const q of (V.pois||[])){
+      const d=hypot((me.x||0)-q.x,(me.z||0)-q.z);
+      if(d<qd){qd=d;nearQ=q;}
+    }
+    if(nearQ&&qd<6.5){
+      const info=POI_INFO[nearQ.type],dig=p0.dig||0;
+      pr.style.display='block';
+      pr.textContent=(nearQ.type==='wreck'||nearQ.type==='shrine')
+        ?`按住 E ${nearQ.type==='wreck'?'打捞沉船':'供奉神龛（30 ¢）'} · ${Math.round(dig/(nearQ.type==='wreck'?2.2:1.2)*100)}%`
+        :`${info.ic} ${info.name} · 靠近即可触发`;
+    }else if(V.merchant&&V.merchant.active){
+      const d=hypot((me.x||0)-V.merchant.x,(me.z||0)-V.merchant.z);
+      pr.style.display='block';
+      pr.textContent=d<10?'⛵ 商船在身边 · 按 B 打开补给站':`⛵ ${V.merchant.name||'商船'}在 ${d.toFixed(0)}m 外 · 用后坐力靠过去`;
+    }else pr.style.display='none';
+  }
+  // 靠近商船时给一个可直接点击的入口
+  const ob=$('openShop');
+  const md=V.merchant?hypot((me.x||0)-V.merchant.x,(me.z||0)-V.merchant.z):999;
+  ob.style.display=(V.merchant&&V.merchant.active&&!shopOpen&&md<=SHOP_RANGE&&
+    !mate.downed&&!NET.spectator)?'inline-block':'none';
+  // 商店：离港自动关闭并提示，避免面板开着却点不动
+  if(shopOpen){
+    if(!V.merchant||!V.merchant.active){closeShop();toast('⛵ 商船离港，补给站关闭','hot');}
+    else renderShop(V);
+  }
+  // 网络面板
+  $('roleTag').textContent=NET.spectator?'SPECTATOR · 观战':
+    NET.role==='host'?'HOST · 权威服务器':NET.role==='client'?'CLIENT · 预测 + 和解':'SOLO · AI 队友';
+  $('nTick').textContent=NET.role==='client'?NET.clientTick:(V.tick||0);
+  $('nSnap').textContent=NET.snapRate.toFixed(0)+' Hz';
+  $('nRtt').textContent=NET.rtt+' ms';
+  $('nErr').textContent=NET.predErr.toFixed(2)+' m';
+  // 结局
+  if(V.phase==='victory'||V.phase==='defeat'){
+    if(lastPhase!==V.phase){
+      lastPhase=V.phase;
+      $('endTitle').textContent=V.phase==='victory'?'浅海重归平静':'航区失守';
+      $('endSub').textContent=V.phase==='victory'?'深渊巨兽沉入海底，两只水豚凯旋。':'两只水豚都倒下了，商船还在等你们……';
+      $('endTime').textContent=$('timer').textContent;
+      $('endKills').textContent=V.kills||0;$('endWave').textContent=V.wave||1;
+      $('end').classList.remove('hidden');
+    }
+  }else lastPhase=V.phase;
+  drawMap(V);
+}
+const mapCtx=$('map').getContext('2d');
+function drawMap(V){
+  const c=mapCtx,W=168,R=80,K=R/HALF,cx=84,cy=84;
+  const P=(x,z)=>[cx+x*K,cy+z*K];
+  c.clearRect(0,0,W,W);
+  c.save();c.beginPath();c.arc(cx,cy,R,0,6.28);c.clip();
+  c.fillStyle='#10242c';c.fillRect(0,0,W,W);
+  const explored=V.explored||[],reveal=!!(V.revealT>0);
+  const s=CELL*K;
+  // 64 格迷雾：未探索只留微弱「信号」，不揭示内容
+  for(let i=0;i<GRID*GRID;i++){
+    const ctr=cellCenter(i),[px,py]=P(ctr.x-CELL/2,ctr.z-CELL/2);
+    const open=!!explored[i]||reveal;
+    if(open){
+      const bi=WORLD.cells[i]?WORLD.cells[i].biome:'shoal';
+      c.fillStyle=BIOME_INFO[bi].color;c.globalAlpha=.52;
+      c.fillRect(px,py,s,s);c.globalAlpha=1;
+    }else{
+      c.fillStyle='rgba(14,34,42,.94)';c.fillRect(px,py,s,s);
+      c.strokeStyle='rgba(120,190,200,.10)';c.lineWidth=.5;c.strokeRect(px+.5,py+.5,s-1,s-1);
+    }
+  }
+  // 未知信号：只画模糊光点，勾人过去看
+  if(!reveal){
+    c.fillStyle='rgba(200,170,255,.55)';c.font='bold 9px sans-serif';c.textAlign='center';
+    const seen=new Set();
+    for(const q of (V.pois||[])){
+      const ci=q.cell>=0?q.cell:cellOf(q.x,q.z);
+      if(ci<0||explored[ci]||seen.has(ci))continue;
+      seen.add(ci);
+      const ctr=cellCenter(ci),[px,py]=P(ctr.x,ctr.z);
+      c.globalAlpha=.35+.35*Math.sin(performance.now()/420+ci);
+      c.fillText('?',px,py+3);
+    }
+    c.globalAlpha=1;
+  }
+  // 已探索区域才画地形细节
+  for(const o of OBSTACLES){
+    const ci=cellOf(o.x,o.z);if(ci<0||!explored[ci]&&!reveal)continue;
+    const [x,y]=P(o.x,o.z);c.fillStyle='rgba(240,214,160,.8)';
+    c.beginPath();c.arc(x,y,Math.max(1.2,o.r*K),0,6.28);c.fill();
+  }
+  c.fillStyle='rgba(255,80,110,.7)';
+  for(const t of THORNS){
+    const ci=cellOf(t.x,t.z);if(ci<0||!explored[ci]&&!reveal)continue;
+    const [x,y]=P(t.x,t.z);c.beginPath();c.arc(x,y,1.7,0,6.28);c.fill();
+  }
+  // 港口（探索到才标）
+  c.font='8px sans-serif';c.textAlign='center';
+  for(const q of (V.ports||[])){
+    const ci=cellOf(q.x,q.z);if(ci<0||!explored[ci]&&!reveal)continue;
+    const [x,y]=P(q.x,q.z);c.fillStyle='rgba(255,210,119,.75)';c.fillRect(x-2,y-2,4,4);
+  }
+  // 兴趣点
+  c.textAlign='center';
+  for(const q of (V.pois||[])){
+    const ci=q.cell>=0?q.cell:cellOf(q.x,q.z);
+    if(ci<0||!explored[ci]&&!reveal)continue;
+    const [x,y]=P(q.x,q.z);
+    c.fillStyle='#'+POI_INFO[q.type].color.toString(16).padStart(6,'0');
+    c.beginPath();c.arc(x,y,q.type==='rune'?3.6:2.7,0,6.28);c.fill();
+    c.fillStyle='#10242c';c.font='bold 8px sans-serif';
+    c.fillText(POI_INFO[q.type].ic,x,y+3);
+  }
+  // 怪物（只显示已探索格内的，保留未知感）
+  c.fillStyle='rgba(255,120,120,.8)';
+  for(const m of (V.monsters||[])){
+    const ci=cellOf(m.x,m.z);if(ci<0||!explored[ci]&&!reveal)continue;
+    const [x,y]=P(m.x,m.z);c.fillRect(x-1,y-1,2,2);
+  }
+  if(V.boss&&!V.boss.dead){const [x,y]=P(V.boss.x,V.boss.z);
+    c.fillStyle='#ff4d6d';c.beginPath();c.arc(x,y,5,0,6.28);c.fill();}
+  // 事件位置
+  if(V.event){const [x,y]=P(V.event.x,V.event.z);
+    c.strokeStyle=EVENT_INFO[V.event.type].color;c.lineWidth=1.5;
+    c.beginPath();c.arc(x,y,7,0,6.28);c.stroke();
+    c.fillStyle=EVENT_INFO[V.event.type].color;c.beginPath();c.arc(x,y,2.5,0,6.28);c.fill();}
+  // 商船
+  if(V.merchant&&V.merchant.active){const [x,y]=P(V.merchant.x,V.merchant.z);
+    c.fillStyle='#ffd277';c.fillRect(x-4,y-4,8,8);
+    c.strokeStyle='#ffd277';c.lineWidth=1;c.beginPath();c.arc(x,y,SHOP_RANGE*K,0,6.28);c.stroke();}
+  // 玩家
+  (V.players||[]).forEach((p,i)=>{const [x,y]=P(p.x,p.z);
+    c.fillStyle=p.downed?'#ffffff':PHEX[i];c.beginPath();c.arc(x,y,3.6,0,6.28);c.fill();
+    c.strokeStyle='rgba(0,0,0,.6)';c.lineWidth=1;c.stroke();});
+  c.restore();
+  c.strokeStyle='rgba(255,210,150,.5)';c.lineWidth=1.5;
+  c.beginPath();c.arc(cx,cy,R,0,6.28);c.stroke();
+}
+/* 商店列表只在数据变化时才重建 DOM：否则每帧重绘会吞掉真实鼠标的
+   mousedown→mouseup（落在不同节点上就不触发 click），表现就是「点了没反应」。
+   点击改用容器事件委托，双重保险。 */
+function shopSignature(V){
+  const me=myView(V);
+  return [V.coins||0,!!(V.merchant&&V.merchant.active),me&&me.downed,
+    me&&me.weapon,me&&me.dmgMul,me&&me.recoilMul,me&&me.pierce,
+    me&&me.maxHearts,me&&me.hearts].join('|');
+}
+function renderShop(V,force){
+  const sig=shopSignature(V);
+  if(!force&&sig===shopSig)return;
+  shopSig=sig;
+  const me=myView(V),coins=V.coins||0;
+  $('shopCoins').textContent=coins;
+  $('shopList').innerHTML=SHOP.map((it,i)=>{
+    const enough=coins>=it.cost;
+    const owned=it.kind==='weapon'&&me&&me.weapon===it.val;
+    const ok=enough&&!(me&&me.downed);
+    const note=owned?' · 已装备':(!enough?` · 还差 ${it.cost-coins} ¢`:'');
+    return `<div class="item ${ok?'':'no'} ${owned?'owned':''}" data-i="${i}">
+      <div class="ic">${it.ic}</div>
+      <div class="tx"><b>${it.name} <span style="opacity:.5;font-weight:400">${i+1}</span></b>
+        <span>${it.desc}${note}</span></div>
+      <div class="pr">${owned?'✓':it.cost+' ¢'}</div></div>`;
+  }).join('');
+}
+function closeShop(){
+  shopOpen=false;shopSig='';$('shop').style.display='none';
+}
+function requestBuy(itemId){
+  if(!shopOpen||NET.spectator)return;
+  const V=viewState(),it=SHOP.find(i=>i.id===itemId);
+  if(!it)return;
+  if(!V.merchant||!V.merchant.active){toast('⛵ 商船已离港，等下一班吧','hot');closeShop();return;}
+  const me=myView(V),coins=V.coins||0;
+  if(me&&me.downed){toast('倒地状态下不能交易','hot');return;}
+  if(me&&hypot(me.x-V.merchant.x,me.z-V.merchant.z)>SHOP_RANGE){
+    toast('离商船太远了，靠近一点','hot');return;}
+  if(coins<it.cost){toast(`🛒 贝壳币不足 · 还差 ${it.cost-coins} ¢`,'hot');sfx('hurt');return;}
+  sfx('buy');
+  if(NET.role==='client')netSend({type:'cmd',cmd:'buy',item:itemId});
+  else buy(0,itemId);
+  shopSig=''; // 让列表立刻刷新（主机端即时，客户端等快照）
+}
+function toggleShop(){
+  if(NET.spectator){toast('观战状态下不能交易');return;}
+  const V=viewState();
+  if(shopOpen){closeShop();return;}
+  if(!V.merchant||!V.merchant.active){toast('⛵ 商船还没靠港','hot');return;}
+  const me=myView(V);
+  if(me&&me.downed){toast('倒地状态下不能交易','hot');return;}
+  if(me&&hypot(me.x-V.merchant.x,me.z-V.merchant.z)>SHOP_RANGE){
+    toast('要靠近商船才能交易','hot');return;}
+  shopOpen=true;$('shop').style.display='block';renderShop(V,true);sfx('buy');
+}
+
+
+
+/* ================= loop.js ================= */
+/* loop.js —— 由 tools/split.mjs 生成后可自由编辑 */
+
+let acc=0,last=performance.now(),renderLast=last,tickCount=0;
+/* 权威模拟与渲染解耦：标签页进入后台时 rAF 会被浏览器节流甚至暂停，
+   定时器仍按真实时间推进并补算固定步长，保证 60Hz 服务器不因切后台停摆。 */
+function advance(now){
+  const dt=Math.min(Math.max((now-last)/1000,0),1.0);
+  last=now;acc+=dt;
+  let guard=0;
+  while(acc>=STEP&&guard++<90){ fixedStep(now); acc-=STEP; }
+  if(acc>STEP*90)acc=0;
+}
+function frame(now){
+  requestAnimationFrame(frame);
+  const dt=Math.min(Math.max((now-renderLast)/1000,0),.1);renderLast=now;
+  timeU.value=now/1000;
+  // 鼠标 → 世界坐标
+  raycaster.setFromCamera(new THREE.Vector2(mouse.x,mouse.y),camera);
+  const hit=new THREE.Vector3();
+  if(raycaster.ray.intersectPlane(aimPlane,hit)){mouseWorld.x=hit.x;mouseWorld.z=hit.z;}
+  advance(now);
+  const V=viewState();
+  updateCamera(V,dt);
+  syncEntities(V,dt,now/1000);
+  updateDecor(now/1000);
+  updateParticles(dt);
+  if(now-uiAt>90){uiAt=now;updateHUD(V,now);}
+  if(now-NET.rateAt>1000){NET.snapRate=NET.snapCount*1000/(now-NET.rateAt);NET.snapCount=0;NET.rateAt=now;}
+  renderer.render(scene,camera);
+}
+let lobbyBeat=0;
+function fixedStep(now){
+  // 候船厅：不跑模拟，只周期性广播成员名单
+  if(NET.role==='host'&&S.phase==='lobby'){
+    if(++lobbyBeat%30===0)broadcastRoom();
+    return;
+  }
+  const sim=(NET.role==='host'||NET.role==='solo')&&S.phase!=='lobby';
+  if(sim){
+    simulateHost(STEP);
+    tickCount++;
+    if(tickCount%SNAP_TICKS===0)sendSnapshot();
+    if(tickCount%60===0&&NET.role==='host')netSend({type:'ping',t:performance.now()});
+  }else if(NET.role==='client'){
+    if(NET.connected&&NET.spectator){NET.clientTick++;return;}
+    if(NET.connected&&NET.roomPhase!=='playing')return;
+    if(NET.connected){
+      const inp=readInput();
+      NET.clientTick++;
+      NET.lastInput=inp;
+      NET.inputHistory.set(NET.clientTick,inp);
+      // 客户端预测：输入立即在本地重放同一套运动模型
+      if(NET.pred){
+        const shot=stepPlayerMotion(NET.pred,inp,STEP);
+        if(shot){
+          const wp=shot.wp;
+          spawnFlash(NET.pred.x+shot.dx*1.7,NET.pred.z+shot.dz*1.7,wp.color,1.2);
+          sfx(NET.pred.weapon==='cannon'?'boom':NET.pred.weapon==='shotgun'?'shot2':'shot');
+        }
+      }
+      // 输入直发：后台标签页里 setTimeout 会被节流，延迟上行会丢输入。
+      // 模拟延迟只施加在下行快照上，预测/和解效果依然成立。
+      netSend({type:'input',tick:NET.clientTick,inp});
+    }
+  }
+}
+
+
+
+/* ================= main.js ================= */
+/* main.js —— 由 tools/split.mjs 生成后可自由编辑 */
+
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,
+  c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function renderWait(){
+  $('waitRoom').textContent=NET.room;
+  const list=NET.members||[],players=list.filter(m=>!m.spectator).length;
+  $('waitCount').textContent=list.length+' 人在线 · '+players+' 条船';
+  $('waitList').innerHTML=list.map(m=>{
+    const col=m.seat>=0&&m.seat<PHEX.length?PHEX[m.seat]:'#9fb0b8';
+    const tag=m.uid===NET.hostUid?'房主 · ':'';
+    const role=m.spectator?'观战':(m.seat+1)+'P '+teamName(m.seat);
+    return `<div class="member"><span class="dot" style="background:${col};color:${col}"></span>
+      <b>${escapeHtml(m.name)}</b><span>${tag}${role}</span></div>`;
+  }).join('');
+  $('btnStartRoom').style.display=NET.role==='host'?'inline-block':'none';
+  $('waitHint').textContent=NET.role==='host'
+    ?`房间可容纳 ${MAX_ROOM} 人、同场最多 ${MAX_SEATS} 条船；空位由 AI 补上，超出的连接自动观战。等人齐后点「开始游戏」。`
+    :'等待房主开始游戏…（船位满了会作为观战加入，依然能看完整局）';
+}
+function clearTransient(){
+  NET.pred=null;NET.prevSnap=null;NET.lastSnap=null;NET.inputHistory.clear();NET.predErr=0;
+  for(const [id,g] of monsterMeshes){scene.remove(g);}monsterMeshes.clear();
+  for(const [id,g] of bulletMeshes){scene.remove(g);}bulletMeshes.clear();
+  for(const [id,g] of poiMeshes){scene.remove(g);}poiMeshes.clear();
+  for(const [id,g] of pickupMeshes){scene.remove(g);}pickupMeshes.clear();
+  camFocus.set(0,0,0);
+  shopOpen=false;shopSig='';$('shop').style.display='none';
+  $('end').classList.add('hidden');lastPhase='playing';
+}
+function beginRun(){
+  const solo=NET.role==='solo';
+  S=makeState();S.phase='playing';
+  if(solo){
+    S.members=[{uid:NET.uid,name:'你',seat:0,spectator:false}];
+    S.hostUid=NET.uid;S.players=[makePlayer(0,-8,8),makePlayer(1,8,8)];
+    S.seats=[NET.uid,null];S.aiActive=[false,true];
+  }else{
+    S.members=NET.members.map(m=>({...m}));S.hostUid=NET.uid;
+    const humans=S.members.filter(m=>!m.spectator);
+    const n=clamp(humans.length,2,MAX_SEATS);
+    S.players=[];S.seats=[];S.aiActive=[];
+    for(let i=0;i<n;i++){
+      const m=humans[i];
+      S.players.push(makePlayer(i,(i-(n-1)/2)*7,8));
+      S.seats.push(m?m.uid:null);S.aiActive.push(!m);
+    }
+  }
+  S.acks=new Array(S.players.length).fill(0);
+  S.remoteInputs=S.players.map(()=>({inp:null,tick:0,at:0}));
+  NET.worldSeed=S.worldSeed;buildWorld(S.worldSeed);initRun(S);
+  ensurePlayerMeshes(S.players.length);
+  for(let i=0;i<S.players.length;i++)playerMeshes[i].position.set(S.players[i].x,0,S.players[i].z);
+  clearTransient();NET.roomPhase='playing';
+  $('start').classList.add('hidden');$('wait').classList.add('hidden');
+  toast('⛵ 300m 未知航区 · 用后坐力推船，探索迷雾里的秘密','hot');
+  if(NET.role==='host')netSend({type:'start',worldSeed:S.worldSeed,seats:S.seats,
+    n:S.players.length,members:S.members,phase:'playing'});
+}
+function startGame(info){
+  if(NET.role!=='client'){beginRun();return;}
+  if(info&&info.worldSeed!=null){NET.worldSeed=info.worldSeed;buildWorld(info.worldSeed);}
+  S=makeState();S.phase='playing';
+  const n=(info&&info.n)||2;
+  S.players=Array.from({length:n},(_,i)=>makePlayer(i,0,0));
+  S.seats=(info&&info.seats)||[];S.members=(info&&info.members)||[];
+  ensurePlayerMeshes(n);clearTransient();NET.roomPhase='playing';
+  $('start').classList.add('hidden');$('wait').classList.add('hidden');
+  toast(NET.spectator?'👀 观战模式 · 跟随 1P 视角':'⛵ 出发！按住左键开火，用后坐力推船','hot');
+}
+function resetGame(){
+  if(NET.role==='client')return;      // 客户端等主机的 reset 消息
+  beginRun();
+  if(NET.role==='host')netSend({type:'reset',worldSeed:S.worldSeed,seats:S.seats,
+    n:S.players.length,members:S.members,phase:'playing'});
+}
+function backToLobby(){
+  S=makeState();S.phase='lobby';S.members=NET.members;S.hostUid=NET.uid;
+  NET.roomPhase='lobby';clearTransient();
+  $('end').classList.add('hidden');$('wait').classList.remove('hidden');
+  renderWait();
+  netSend({type:'lobby',members:NET.members,host:NET.uid});
+}
+function enterRoom(isHost){
+  NET.room=$('roomName').value.trim()||'capy-1';
+  NET.inRoom=true;NET.roomPhase='lobby';
+  $('start').classList.add('hidden');$('wait').classList.remove('hidden');
+  if(isHost){
+    NET.members=[{uid:NET.uid,name:($('playerName').value.trim()||'房主').slice(0,16),
+      seat:0,spectator:false}];
+    NET.hostUid=NET.uid;NET.spectator=false;NET.clientId=0;NET.connected=true;
+    S=makeState();S.phase='lobby';S.members=NET.members;S.hostUid=NET.uid;
+    broadcastRoom();
+  }else{
+    NET.members=[];NET.hostUid=null;NET.spectator=false;NET.connected=false;
+  }
+  renderWait();
+}
+function leaveRoom(){
+  if(NET.role==='host'||NET.role==='client')netSend({type:'bye'});
+  if(NET.transport){NET.transport.close();NET.transport=null;}
+  NET.inRoom=false;NET.connected=false;NET.spectator=false;NET.members=[];
+  S=makeState();NET.role='solo';
+  $('wait').classList.add('hidden');$('end').classList.add('hidden');
+  $('start').classList.remove('hidden');
+}
+function setupTransport(){
+  NET.room=$('roomName').value.trim()||'capy-1';
+  // 手填优先；服务器托管的页面由服务端注入同域中继地址，实现零配置联机
+  NET.wsUrl=$('wsUrl').value.trim()||window.__CAPY_RELAY__||'';
+  if(NET.transport)NET.transport.close();
+  NET.transport=makeTransport(NET.room,NET.wsUrl);
+  NET.transport.onMessage(onNetMessage);
+}
+$('btnSolo').onclick=()=>{
+  NET.role='solo';NET.connected=false;NET.spectator=false;NET.clientId=0;
+  NET.transport=null;NET.members=[{uid:NET.uid,name:'你',seat:0,spectator:false}];
+  startGame();
+};
+$('btnHost').onclick=()=>{
+  NET.role='host';setupTransport();enterRoom(true);
+  toast('房间已创建 · 把网址和房间名发给队友，等人齐后点「开始游戏」','hot');
+};
+$('btnJoin').onclick=()=>{
+  NET.role='client';setupTransport();enterRoom(false);
+  $('btnJoin').textContent='正在寻找主机…';
+  netSend({type:'hello',name:($('playerName').value.trim()||'玩家').slice(0,16)});
+  setTimeout(()=>{if(!NET.connected){
+    $('btnJoin').textContent='加入房间 · 另一台设备';
+    toast('没找到主机：请先点「创建房间」，并确认房间名一致','hot');
+  }},2500);
+};
+$('btnStartRoom').onclick=()=>{
+  if(NET.role!=='host')return;
+  beginRun();
+};
+$('btnLeaveRoom').onclick=leaveRoom;
+$('btnRestart').onclick=()=>{
+  if(NET.role==='client')netSend({type:'cmd',cmd:'reset'});
+  else resetGame();
+};
+$('btnBackLobby').onclick=()=>{
+  if(NET.role==='client')netSend({type:'cmd',cmd:'lobby'});
+  else backToLobby();
+};
+$('shopClose').onclick=()=>closeShop();
+$('openShop').onclick=()=>toggleShop();
+// 事件委托：列表重绘也不会丢失点击
+$('shopList').addEventListener('click',e=>{
+  const el=e.target.closest('.item');if(!el)return;
+  const it=SHOP[+el.dataset.i];if(it)requestBuy(it.id);
+});
+$('fastBtn').onclick=()=>{
+  if(NET.role==='client')netSend({type:'cmd',cmd:'fast',val:30});
+  else if(S.phase==='playing'){S.gameTime=Math.min(BOSS_TIME-.1,S.gameTime+30);toast('⏩ 快进 30 秒');}
+};
+$('lat').oninput=e=>{NET.latency=+e.target.value;$('latVal').textContent=e.target.value;};
+addEventListener('resize',()=>{
+  camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth,innerHeight);
+});
+addEventListener('keydown',e=>{
+  const k=e.key.toLowerCase();keys[k]=true;
+  if(k==='b'){e.preventDefault();toggleShop();}
+  if(k==='escape'&&shopOpen)toggleShop();
+  if(k>='1'&&k<='7'&&shopOpen)requestBuy(SHOP[+k-1].id);
+  if([' ','arrowup','arrowdown','arrowleft','arrowright'].includes(k))e.preventDefault();
+});
+addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false;});
+const cv=renderer.domElement;
+cv.addEventListener('pointermove',e=>{
+  mouse.x=e.clientX/innerWidth*2-1;mouse.y=-(e.clientY/innerHeight*2-1);mouse.inside=true;
+});
+cv.addEventListener('pointerdown',e=>{if(e.button===0)mouse.down=true;sfx('shot');});
+addEventListener('pointerup',e=>{if(e.button===0)mouse.down=false;});
+cv.addEventListener('contextmenu',e=>e.preventDefault());
+addEventListener('blur',()=>{mouse.down=false;for(const k in keys)keys[k]=false;});
+
+// 大厅显示当前中继模式，便于部署后排障
+(function(){
+  const auto=window.__CAPY_RELAY__,el=$('relayState'),inp=$('wsUrl');
+  if(auto){
+    inp.placeholder='留空即自动使用 '+auto;
+    el.textContent='✓ 服务器中继已自动配置（跨设备可直连）';
+    el.style.color='#8ce8b0';
+  }else{
+    el.textContent='本地模式 · 同浏览器双标签页直连';
+    el.style.color='';
+  }
+})();
+// 初始镜头对准起始区域
+playerMeshes[0].position.set(-6,0,8);playerMeshes[1].position.set(6,0,8);
+camera.lookAt(0,0,0);
+NET.rateAt=performance.now();
+// 独立于 rAF 的模拟心跳：后台标签页也能维持 60Hz 补算
+setInterval(()=>advance(performance.now()),1000/30);
+window.__capy={THREE,camera,scene,get state(){return S;},net:NET,
+  world:WORLD,obstacles:OBSTACLES,thorns:THORNS};
+requestAnimationFrame(frame);
+
+
+</script>
+</body>
+</html>

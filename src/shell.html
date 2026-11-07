@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+<title>水豚双舟 · 夕照浅海合作射击</title>
+
+<style>
+  :root{
+    --ink:#12232b; --cream:#fff4e2; --sun:#ffab5e; --sun2:#ff7851;
+    --sea:#2fa89c; --panel:rgba(14,36,44,.78); --line:rgba(255,225,190,.18);
+    --p1:#ffb15c; --p2:#6fd6ff; --bad:#ff6b6b; --good:#8ce8b0;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;overflow:hidden;background:#10242c;color:var(--cream);
+    font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;user-select:none}
+  #app{position:fixed;inset:0}
+  canvas{display:block;cursor:none}
+  #hud{position:fixed;inset:0;pointer-events:none;z-index:5}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    backdrop-filter:blur(10px);box-shadow:0 8px 30px rgba(0,0,0,.28)}
+  #team{position:absolute;left:18px;top:18px;width:246px;padding:12px 14px}
+  .pcard{display:flex;gap:10px;align-items:center;padding:6px 0}
+  .pcard+.pcard{border-top:1px solid var(--line);margin-top:4px;padding-top:10px}
+  .avatar{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;font-size:21px;flex:none;
+    background:rgba(255,255,255,.08);border:1px solid var(--line)}
+  .pinfo{flex:1;min-width:0}
+  .pname{font-size:12px;font-weight:700;letter-spacing:.5px;display:flex;justify-content:space-between}
+  .pname span:last-child{opacity:.6;font-weight:400;font-size:11px}
+  .hearts{font-size:15px;letter-spacing:2px;margin-top:3px;line-height:1}
+  .hearts .off{opacity:.22}
+  .wp{font-size:11px;opacity:.72;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .downed{color:var(--bad);font-weight:700}
+  #centerTop{position:absolute;top:18px;left:50%;transform:translateX(-50%);text-align:center;width:340px}
+  #wavePill{display:inline-flex;gap:14px;align-items:center;padding:9px 18px;font-size:12px;letter-spacing:.4px}
+  #wavePill b{font-size:16px;color:var(--sun)}
+  #bossWrap{margin-top:10px;padding:10px 14px;display:none}
+  .barTitle{font-size:11px;letter-spacing:2px;margin-bottom:6px;color:#ffcf9c}
+  .bar{height:9px;border-radius:6px;background:rgba(0,0,0,.45);overflow:hidden}
+  .bar>i{display:block;height:100%;width:100%;border-radius:6px;
+    background:linear-gradient(90deg,#ff5e5e,#ffab5e);transition:width .18s}
+  #net{position:absolute;right:18px;top:18px;width:212px;padding:12px 14px;font-size:11px;line-height:1.8}
+  #net h4{margin:0 0 6px;font-size:11px;letter-spacing:2px;color:var(--sun)}
+  .kv{display:flex;justify-content:space-between;opacity:.86}
+  .kv b{color:#bff3e2;font-weight:600}
+  #net .tag{display:inline-block;padding:1px 7px;border-radius:6px;background:rgba(140,232,176,.16);
+    color:var(--good);font-size:10px;margin-bottom:6px}
+  input[type=range]{width:100%;accent-color:var(--sun);height:14px}
+  .btn{pointer-events:auto;cursor:pointer;border:1px solid var(--line);background:rgba(255,255,255,.08);
+    color:var(--cream);border-radius:9px;padding:6px 12px;font-size:12px;font-family:inherit;transition:.15s}
+  .btn:hover{background:rgba(255,171,94,.24);border-color:var(--sun)}
+  .btn.primary{background:linear-gradient(135deg,var(--sun),var(--sun2));color:#2a1608;border:0;font-weight:800}
+  .btn.primary:hover{filter:brightness(1.1)}
+  .tiny{font-size:10px;opacity:.55;margin-top:6px;line-height:1.5}
+  #explore{position:absolute;left:18px;top:150px;width:246px;padding:10px 14px;font-size:11px;line-height:1.7}
+  #explore .rw{display:flex;justify-content:space-between;opacity:.85}
+  #explore b{color:var(--sun);font-weight:700}
+  #expBar{height:6px;border-radius:4px;background:rgba(0,0,0,.42);overflow:hidden;margin:5px 0 7px}
+  #expBar>i{display:block;height:100%;width:0;border-radius:4px;
+    background:linear-gradient(90deg,#7fe3c0,#ffd277);transition:width .3s}
+  #buffs{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
+  .buff{padding:2px 7px;border-radius:6px;background:rgba(140,232,176,.18);
+    color:#bff3e2;font-size:10px;border:1px solid rgba(140,232,176,.25)}
+  #eventBanner{position:absolute;left:18px;top:288px;width:246px;
+    display:none;padding:8px 14px;text-align:left;font-size:11px}
+  #eventBanner b{color:var(--sun);font-size:13px;letter-spacing:1px;display:block}
+  #eventBanner span{display:block;font-size:10px;opacity:.75;margin-top:3px}
+  #mapBox{position:absolute;left:18px;bottom:18px;padding:10px}
+  #mapBox canvas{display:block;border-radius:9px;cursor:default}
+  #mapBox .cap{font-size:10px;letter-spacing:2px;opacity:.6;margin-bottom:6px;text-align:center}
+  #coins{position:absolute;right:18px;bottom:18px;padding:12px 16px;font-size:13px;text-align:right}
+  #coins b{font-size:24px;color:#ffd98a}
+  #coins .k{font-size:11px;opacity:.7;margin-top:2px}
+  #hint{position:absolute;bottom:22px;left:50%;transform:translateX(-50%);text-align:center;font-size:12px;
+    padding:9px 18px;max-width:620px;line-height:1.7}
+  #hint kbd{background:rgba(255,255,255,.14);border:1px solid var(--line);border-radius:5px;
+    padding:1px 6px;font-family:inherit;font-size:11px;margin:0 2px}
+  #prompt{color:var(--sun);font-weight:800;display:none}
+  #toasts{position:absolute;top:100px;left:50%;transform:translateX(-50%);display:flex;
+    flex-direction:column;align-items:center;gap:8px}
+  .toast{padding:8px 18px;border-radius:30px;background:rgba(14,36,44,.88);border:1px solid var(--line);
+    font-size:13px;animation:pop .3s ease;white-space:nowrap}
+  .toast.hot{color:#ffd08a;border-color:rgba(255,171,94,.5)}
+  @keyframes pop{from{opacity:0;transform:translateY(-10px) scale(.94)}to{opacity:1;transform:none}}
+  .overlay{position:fixed;inset:0;z-index:20;display:grid;place-items:center;
+    background:radial-gradient(ellipse at 50% 30%,rgba(255,150,90,.16),rgba(6,20,26,.94) 70%);
+    backdrop-filter:blur(6px)}
+  .card{width:min(720px,92vw);max-height:92vh;overflow:auto;padding:34px 38px;text-align:center}
+  .card h1{font-size:40px;margin:0 0 6px;letter-spacing:4px;
+    background:linear-gradient(120deg,#ffe3b0,#ff9560,#8fe3d0);-webkit-background-clip:text;
+    background-clip:text;color:transparent}
+  .card .sub{font-size:13px;opacity:.7;letter-spacing:2px;margin-bottom:24px}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;text-align:left;margin:20px 0}
+  .feat{padding:13px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid var(--line)}
+  .feat b{display:block;color:var(--sun);font-size:13px;margin-bottom:5px}
+  .feat span{font-size:11px;opacity:.72;line-height:1.6;display:block}
+  .row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:18px}
+  .field{display:flex;gap:8px;align-items:center;justify-content:center;margin-top:16px;font-size:11px;opacity:.8;flex-wrap:wrap}
+  input[type=text]{background:rgba(0,0,0,.3);border:1px solid var(--line);color:var(--cream);
+    border-radius:8px;padding:7px 10px;font-family:inherit;font-size:12px;outline:none}
+  input[type=text]:focus{border-color:var(--sun)}
+  .note{font-size:11px;opacity:.55;line-height:1.8;margin-top:20px;text-align:left;
+    border-top:1px solid var(--line);padding-top:14px}
+  #shop{position:fixed;z-index:15;left:50%;top:50%;transform:translate(-50%,-50%);
+    width:min(690px,94vw);padding:20px 22px;display:none;pointer-events:auto}
+  #shop h3{margin:0 0 4px;font-size:20px;letter-spacing:2px}
+  #shop .shSub{font-size:11px;opacity:.65;margin-bottom:14px}
+  #shopList{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+  .item{display:flex;gap:11px;align-items:center;padding:10px;border-radius:11px;
+    background:rgba(255,255,255,.05);border:1px solid var(--line);cursor:pointer;transition:.15s}
+  .item:hover{background:rgba(255,171,94,.14);border-color:rgba(255,171,94,.5)}
+  .item:active{transform:scale(.975);background:rgba(255,171,94,.34)}
+  .item.no{opacity:.55;cursor:pointer}
+  .item.owned{border-color:rgba(140,232,176,.55);background:rgba(140,232,176,.10)}
+  .item .ic{font-size:19px;width:34px;text-align:center;color:var(--sun)}
+  .item .tx{flex:1;min-width:0}
+  .item .tx b{font-size:13px;display:block}
+  .item .tx span{font-size:10px;opacity:.65;display:block;margin-top:2px}
+  .item .pr{font-size:13px;color:#ffd98a;font-weight:800;white-space:nowrap}
+  #shopClose{margin-top:14px}
+  #waitList{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:18px 0;text-align:left}
+  .member{display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:10px;
+    background:rgba(255,255,255,.05);border:1px solid var(--line);font-size:12px}
+  .member .dot{width:11px;height:11px;border-radius:50%;flex:none;box-shadow:0 0 8px currentColor}
+  .member b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+  .member span:last-child{font-size:10px;opacity:.66;white-space:nowrap}
+  #waitHint{font-size:11px;opacity:.65;line-height:1.7;margin-top:16px;
+    border-top:1px solid var(--line);padding-top:12px;text-align:left}
+  #end .stats{display:flex;gap:26px;justify-content:center;margin:18px 0;font-size:13px}
+  #end .stats b{display:block;font-size:24px;color:var(--sun)}
+  .hidden{display:none !important}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<div id="hud">
+  <div id="team" class="panel"></div>
+  <div id="explore" class="panel">
+    <div class="rw"><span>🧭 探索度</span><b id="expPct">0%</b></div>
+    <div id="expBar"><i id="expFill"></i></div>
+    <div class="rw"><span>◆ 深渊符文</span><b id="runeNum">0 / 3</b></div>
+    <div class="rw"><span>▣ 未知线索</span><b id="clueTxt">扫描中…</b></div>
+    <div id="buffs"></div>
+  </div>
+  <div id="eventBanner" class="panel"><b id="evName"></b><span id="evDesc"></span></div>
+  <div id="centerTop">
+    <div id="wavePill" class="panel"><span>第 <b id="waveNum">1</b> 波</span><span>生存 <b id="timer">00:00</b></span><span id="merchantInfo">商船 32s</span></div>
+    <div id="bossWrap" class="panel"><div class="barTitle">深渊巨兽 · ABYSSAL MAW</div><div class="bar"><i id="bossBar"></i></div></div>
+  </div>
+  <div id="net" class="panel">
+    <h4>NETWORK / 60Hz</h4>
+    <div class="tag" id="roleTag">SOLO · AI 队友</div>
+    <div class="kv"><span>权威 Tick</span><b id="nTick">0</b></div>
+    <div class="kv"><span>快照频率</span><b id="nSnap">20 Hz</b></div>
+    <div class="kv"><span>输入上行</span><b id="nIn">60 Hz</b></div>
+    <div class="kv"><span>往返延迟</span><b id="nRtt">0 ms</b></div>
+    <div class="kv"><span>和解误差</span><b id="nErr">0.00 m</b></div>
+    <div style="margin-top:6px">模拟延迟 <span id="latVal">30</span> ms</div>
+    <input id="lat" type="range" min="0" max="160" value="30" />
+    <button class="btn" id="fastBtn" style="width:100%;margin-top:6px;padding:4px">⏩ 快进 30 秒</button>
+    <div class="tiny">固定步长 1/60s 权威模拟 · 20Hz 快照 ·<br/>客户端预测 + 回滚和解 · 实体插值</div>
+  </div>
+  <div id="mapBox" class="panel"><div class="cap">300m 航区 · 迷雾</div><canvas id="map" width="168" height="168"></canvas></div>
+  <div id="coins" class="panel"><b id="coinNum">0</b> <span style="font-size:12px;opacity:.8">贝壳币</span><div class="k">击杀 <span id="killNum">0</span> · 按 <kbd>B</kbd> 开商店</div></div>
+  <div id="hint" class="panel">
+    <div id="prompt"></div>
+    <div><kbd>鼠标</kbd>瞄准 / 按住左键开火（后坐力推船） <kbd>WASD</kbd>轻划桨 <kbd>E</kbd>救队友 <kbd>B</kbd>商店
+      <button class="btn" id="openShop" style="display:none;padding:3px 12px;margin-left:8px">⛵ 打开商店</button></div>
+  </div>
+  <div id="toasts"></div>
+</div>
+
+<div id="shop" class="panel">
+  <h3>⛵ 流浪商船 · 补给站</h3>
+  <div class="shSub">共享贝壳币 <b id="shopCoins" style="color:#ffd98a;font-size:13px">0</b> ¢ · 升级对购买者生效 · 按 1–7 快捷购买</div>
+  <div id="shopList"></div>
+  <div style="text-align:center"><button class="btn" id="shopClose">关闭 (B)</button></div>
+</div>
+
+<div id="start" class="overlay">
+  <div class="card panel">
+    <h1>水豚双舟</h1>
+    <div class="sub">CAPYBARA CO-OP · 夕照浅海 · 300m 未知航区</div>
+    <div class="grid">
+      <div class="feat"><b>🔫 后坐力即引擎</b><span>开枪的反冲会把小船推向反方向。想往右走，就朝左打。连续点射 = 持续航行。</span></div>
+      <div class="feat"><b>💛 五颗心 + 救援</b><span>每船 5 心，倒地不淘汰，队友靠近按住 E 2.5 秒扶起；两人同时倒地即失败。</span></div>
+      <div class="feat"><b>🧭 迷雾与秘藏</b><span>300m 海域分成 64 格，均有未知地貌。沉船、漩涡、神龛与符文藏在雾里；集齐 3 枚符文可提前唤醒首领。</span></div>
+      <div class="feat"><b>⚡ 随机事件与战利品</b><span>每局地形、港口、宝箱都重新生成；宝箱潮、怪潮、落雷、洋流、幽灵商船轮番登场，怪物掉落护盾与增益。</span></div>
+      <div class="feat"><b>⛵ 商船与首领</b><span>商船每班换个港口，逼你把地图跑开；生存 4 分钟后深渊巨兽登场，击杀即通关。</span></div>
+    </div>
+    <div class="row">
+      <button class="btn primary" id="btnSolo">开始游戏（AI 队友）</button>
+      <button class="btn" id="btnHost">创建房间 · 等人加入</button>
+      <button class="btn" id="btnJoin">加入房间 · 另一台设备</button>
+    </div>
+    <div class="field">
+      房间 <input type="text" id="roomName" value="capy-1" style="width:100px" />
+      昵称 <input type="text" id="playerName" placeholder="留空自动命名" style="width:130px" />
+      中继 <input type="text" id="wsUrl" placeholder="留空＝自动使用服务器中继" style="width:220px" />
+      <span id="relayState" style="font-size:10px"></span>
+    </div>
+    <div class="note">
+      联机说明：由本项目服务器托管时会自动连上同域中继。一台设备点「创建房间」进入候船厅，其他人点「加入房间」，房主等人齐后点「开始游戏」才开局；房间最多 12 人、同场最多 6 条船，空位由 AI 补上，多出的连接自动观战（HTTPS 站点会自动使用 wss://）。
+      若直接用静态文件或别的服务器打开，同一浏览器的多个标签页也能直连（BroadcastChannel / localStorage）；也可手动填入中继地址实现跨设备。
+      中继只需把收到的 JSON 原样广播给同房间的其他连接（消息含 room / from / type 字段）。
+      主机运行 60Hz 权威模拟，客户端发送 60Hz 输入并做本地预测，收到 20Hz 快照后回滚、重放输入完成和解，其余实体做插值。
+    </div>
+  </div>
+</div>
+
+<div id="wait" class="overlay hidden">
+  <div class="card panel">
+    <h1>候船厅</h1>
+    <div class="sub">房间 <b id="waitRoom" style="color:var(--sun)"></b> · <span id="waitCount"></span></div>
+    <div id="waitList"></div>
+    <div class="row">
+      <button class="btn primary" id="btnStartRoom">开始游戏</button>
+      <button class="btn" id="btnLeaveRoom">离开房间</button>
+    </div>
+    <div id="waitHint"></div>
+  </div>
+</div>
+
+<div id="end" class="overlay hidden">
+  <div class="card panel">
+    <h1 id="endTitle">航区失守</h1>
+    <div class="sub" id="endSub">两只水豚都倒下了……</div>
+    <div class="stats"><div><b id="endTime">00:00</b>生存时间</div><div><b id="endKills">0</b>击杀</div><div><b id="endWave">1</b>波次</div></div>
+    <div class="row">
+      <button class="btn primary" id="btnRestart">再来一局</button>
+      <button class="btn" id="btnBackLobby">返回房间</button>
+    </div>
+  </div>
+</div>
+
+<!--SCRIPT-->
+</body>
+</html>

@@ -26,7 +26,9 @@ const MAX_FRAME = Number(process.env.MAX_FRAME || 2 * 1024 * 1024);
 const GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
 
 /* -------------------------------- 页面注入 -------------------------------- */
-const htmlPath = path.join(ROOT, 'capybara-coop.html');
+/* 优先使用 dist/ 构建产物；不存在则即时构建（开发也能直接跑） */
+const distPath = path.join(ROOT, 'dist', 'capybara-coop.html');
+const htmlPath = fs.existsSync(distPath) ? distPath : path.join(ROOT, 'capybara-coop.html');
 let source = fs.readFileSync(htmlPath, 'utf8');
 const relayScript = `<script>window.__CAPY_RELAY__=(location.protocol==='https:'?'wss://':'ws://')+location.host+${JSON.stringify(RELAY_PATH)};</script>`;
 const PAGE = source.includes('<!--CAPY_RELAY_CONFIG-->')

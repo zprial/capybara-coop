@@ -4,8 +4,8 @@
 *.log
 node_modules/
 
-# 唯一的游戏页面是根目录 capybara-coop.html；Dockerfile 直接 COPY 它，
-# 不再有 public/index.html 副本。
+# 源码在 src/，部署单文件由 build.mjs 生成在 dist/（两者都进仓库）
+# 根目录 capybara-coop.html 是历史产物，已被 dist/ 取代，保留到下个提交后删除
 
 # 本地运行/调试产物
 .env

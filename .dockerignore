@@ -1,4 +1,4 @@
-# 只让 Dockerfile 需要的三个文件进入 build context
+# 镜像构建只需要 build.mjs + src/（前端）与 server.mjs/package.json（服务）
 .git
 .gitignore
 .workbuddy
@@ -8,3 +8,6 @@ node_modules
 npm-debug.log*
 .env
 .env.local
+index.html
+dist
+capybara-coop.html
