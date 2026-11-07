@@ -119,6 +119,14 @@
   .item .tx span{font-size:10px;opacity:.65;display:block;margin-top:2px}
   .item .pr{font-size:13px;color:#ffd98a;font-weight:800;white-space:nowrap}
   #shopClose{margin-top:14px}
+  #waitList{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:18px 0;text-align:left}
+  .member{display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:10px;
+    background:rgba(255,255,255,.05);border:1px solid var(--line);font-size:12px}
+  .member .dot{width:11px;height:11px;border-radius:50%;flex:none;box-shadow:0 0 8px currentColor}
+  .member b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+  .member span:last-child{font-size:10px;opacity:.66;white-space:nowrap}
+  #waitHint{font-size:11px;opacity:.65;line-height:1.7;margin-top:16px;
+    border-top:1px solid var(--line);padding-top:12px;text-align:left}
   #end .stats{display:flex;gap:26px;justify-content:center;margin:18px 0;font-size:13px}
   #end .stats b{display:block;font-size:24px;color:var(--sun)}
   .hidden{display:none !important}
@@ -184,20 +192,34 @@
     </div>
     <div class="row">
       <button class="btn primary" id="btnSolo">开始游戏（AI 队友）</button>
-      <button class="btn" id="btnHost">创建房间 · 本机为主机</button>
+      <button class="btn" id="btnHost">创建房间 · 等人加入</button>
       <button class="btn" id="btnJoin">加入房间 · 另一台设备</button>
     </div>
     <div class="field">
       房间 <input type="text" id="roomName" value="capy-1" style="width:100px" />
-      中继 <input type="text" id="wsUrl" placeholder="留空＝自动使用服务器中继" style="width:250px" />
+      昵称 <input type="text" id="playerName" placeholder="留空自动命名" style="width:130px" />
+      中继 <input type="text" id="wsUrl" placeholder="留空＝自动使用服务器中继" style="width:220px" />
       <span id="relayState" style="font-size:10px"></span>
     </div>
     <div class="note">
-      联机说明：由本项目服务器托管时会自动连上同域中继，两台设备打开同一网址、房间名填一致，先点「创建房间」再点「加入房间」即可（HTTPS 站点会自动使用 wss://）。
-      若直接用静态文件或别的服务器打开，则退化为同一浏览器双标签页直连（BroadcastChannel / localStorage）；也可手动填入中继地址实现跨设备。
+      联机说明：由本项目服务器托管时会自动连上同域中继。一台设备点「创建房间」进入候船厅，其他人点「加入房间」，房主等人齐后点「开始游戏」才开局；房间最多 12 人、同场最多 6 条船，空位由 AI 补上，多出的连接自动观战（HTTPS 站点会自动使用 wss://）。
+      若直接用静态文件或别的服务器打开，同一浏览器的多个标签页也能直连（BroadcastChannel / localStorage）；也可手动填入中继地址实现跨设备。
       中继只需把收到的 JSON 原样广播给同房间的其他连接（消息含 room / from / type 字段）。
       主机运行 60Hz 权威模拟，客户端发送 60Hz 输入并做本地预测，收到 20Hz 快照后回滚、重放输入完成和解，其余实体做插值。
     </div>
+  </div>
+</div>
+
+<div id="wait" class="overlay hidden">
+  <div class="card panel">
+    <h1>候船厅</h1>
+    <div class="sub">房间 <b id="waitRoom" style="color:var(--sun)"></b> · <span id="waitCount"></span></div>
+    <div id="waitList"></div>
+    <div class="row">
+      <button class="btn primary" id="btnStartRoom">开始游戏</button>
+      <button class="btn" id="btnLeaveRoom">离开房间</button>
+    </div>
+    <div id="waitHint"></div>
   </div>
 </div>
 
@@ -206,7 +228,10 @@
     <h1 id="endTitle">航区失守</h1>
     <div class="sub" id="endSub">两只水豚都倒下了……</div>
     <div class="stats"><div><b id="endTime">00:00</b>生存时间</div><div><b id="endKills">0</b>击杀</div><div><b id="endWave">1</b>波次</div></div>
-    <button class="btn primary" id="btnRestart">再来一局</button>
+    <div class="row">
+      <button class="btn primary" id="btnRestart">再来一局</button>
+      <button class="btn" id="btnBackLobby">返回房间</button>
+    </div>
   </div>
 </div>
 
@@ -270,8 +295,11 @@ const MON={
   spitter:{hp:52,speed:1.7,r:1.05,dmg:1,coin:13,color:0x7b4b8c,eye:0xff7bd0},
   brute  :{hp:150,speed:1.35,r:1.7,dmg:2,coin:26,color:0x8c4040,eye:0xff9a6a}
 };
-const PCOLOR=[0xffb15c,0x6fd6ff];
-const PHEX=['#ffb15c','#6fd6ff'];
+const MAX_SEATS=6, MAX_ROOM=12;      // 同场最多 6 条船，房间最多 12 个连接（其余观战）
+const PCOLOR=[0xffb15c,0x6fd6ff,0x8ce8b0,0xd9b8ff,0xff8f8f,0xffd277];
+const PHEX=['#ffb15c','#6fd6ff','#8ce8b0','#d9b8ff','#ff8f8f','#ffd277'];
+const PNAME=['橙队','蓝队','绿队','紫队','红队','金队'];
+function teamName(i){return PNAME[i]||(i+1)+'队';}
 const OBSTACLES=[],THORNS=[],WORLD={seed:0,cells:[],ports:[],landmarks:[]};
 
 /* 分区地貌 / 未知点 / 随机事件 */
@@ -318,7 +346,9 @@ function makeState(){return{
   merchant:{active:false,x:0,z:0,timeLeft:0,next:0,portId:-1,ghost:false,name:''},
   ports:[],pois:[],pickups:[],explored:new Array(GRID*GRID).fill(0),exploreCount:0,
   event:null,eventTimer:22,runes:0,revealT:0,
-  events:[],pendingEvents:[],nextId:1,bothDown:0,clients:[true,false],remoteInput:null,remoteInputAt:0,acks:[0,0]
+  members:[],seats:[null,null],aiActive:[false,true],hostUid:null,
+  events:[],pendingEvents:[],nextId:1,bothDown:0,
+  remoteInputs:[{inp:null,tick:0,at:0},{inp:null,tick:0,at:0}],acks:[0,0]
 };}
 let S=makeState();
 
@@ -349,7 +379,8 @@ function initRun(st){
 /* ------------------------------ 网络层 ----------------------------------- */
 const NET={
   role:'solo',uid:Math.random().toString(36).slice(2,10),room:'capy-1',wsUrl:'',
-  transport:null,clientId:1,clientTick:0,connected:false,
+  transport:null,clientId:1,clientTick:0,connected:false,spectator:false,
+  members:[],hostUid:null,roomPhase:'lobby',inRoom:false,
   prevSnap:null,lastSnap:null,snapAt:0,snapCount:0,snapRate:0,rateAt:0,
   pred:null,predErr:0,inputHistory:new Map(),lastInput:null,
   rtt:0,pingAt:0,latency:30,seen:new Set(),worldSeed:null
@@ -405,37 +436,42 @@ function readInput(){
   return {ax:mouseWorld.x,az:mouseWorld.z,fire:!!(mouse.down||keys[' ']),revive:!!keys.e,
     px:clamp(px,-1,1),pz:clamp(pz,-1,1)};
 }
-function aiInput(){
-  const p=S.players[1]; let target=null,best=1e9;
+function idleInput(p){return{ax:p.x,az:p.z,fire:false,revive:false,px:0,pz:0};}
+function aiInput(p,id){
+  let target=null,best=1e9;
   for(const m of S.monsters){const d=hypot(m.x-p.x,m.z-p.z);if(d<best){best=d;target=m;}}
-  if(S.boss&&!S.boss.dead){const d=hypot(S.boss.x-p.x,S.boss.z-p.z)*0.8;if(d<best){best=d;target=S.boss;}}
-  let ax=p.x+Math.sin(S.gameTime*.7)*12,az=p.z+Math.cos(S.gameTime*.7)*12,fire=false,px=0,pz=0,revive=false;
-  const mate=S.players[0],md=hypot(mate.x-p.x,mate.z-p.z);
-  if(mate.downed&&md>2.4){
-    // 用后坐力朝队友方向推进：朝反方向开火
-    ax=p.x-(mate.x-p.x)/md*16; az=p.z-(mate.z-p.z)/md*16; fire=true;
-    px=(mate.x-p.x)/md*.6; pz=(mate.z-p.z)/md*.6;
-  }else if(mate.downed){ revive=true; }
+  if(S.boss&&!S.boss.dead){const d=hypot(S.boss.x-p.x,S.boss.z-p.z)*.8;if(d<best){best=d;target=S.boss;}}
+  let ax=p.x+Math.sin(S.gameTime*.7+id)*12,az=p.z+Math.cos(S.gameTime*.7+id)*12,
+      fire=false,px=0,pz=0,revive=false;
+  let mate=null,md=1e9;
+  for(const q of S.players){
+    if(q===p||!q.downed)continue;
+    const d=hypot(q.x-p.x,q.z-p.z);if(d<md){md=d;mate=q;}
+  }
+  if(mate&&md>2.4){
+    ax=p.x-(mate.x-p.x)/md*16;az=p.z-(mate.z-p.z)/md*16;fire=true;
+    px=(mate.x-p.x)/md*.6;pz=(mate.z-p.z)/md*.6;
+  }else if(mate){revive=true;}
   else if(target){
-    ax=target.x; az=target.z; fire=best<34;
+    ax=target.x;az=target.z;fire=best<34;
     if(best<8){px=-(target.x-p.x)/(best||1);pz=-(target.z-p.z)/(best||1);}
   }
-  if(S.merchant.active&&S.coins>=70&&!target){ fire=false; }
+  if(S.merchant.active&&S.coins>=70&&!target)fire=false;
   return {ax,az,fire,revive,px,pz};
 }
 function hostInputs(){
-  const a=[readInput(),null];
-  if(S.clients[1]){
-    const age=performance.now()-S.remoteInputAt;
-    if(age>3000){ // 掉线保护：AI 重新接管 2P，主机继续可玩
-      S.clients[1]=false;NET.connected=false;
-      toast('队友连接中断 · AI 接管 2P','hot');
-      a[1]=aiInput();
-    }else{
-      const stale=age>700;
-      a[1]=S.remoteInput?{...S.remoteInput,fire:stale?false:S.remoteInput.fire,revive:stale?false:S.remoteInput.revive}:{ax:0,az:0,fire:false,revive:false,px:0,pz:0};
-    }
-  }else a[1]=aiInput();
+  const a=[];
+  for(let i=0;i<S.players.length;i++){
+    if(i===0){a.push(readInput());S.aiActive[i]=false;continue;}
+    if(!S.seats[i]){S.aiActive[i]=true;a.push(aiInput(S.players[i],i));continue;}
+    const r=S.remoteInputs[i]||{inp:null,tick:0,at:0};
+    const age=performance.now()-(r.at||0);
+    if(age>3000){S.aiActive[i]=true;a.push(aiInput(S.players[i],i));continue;}
+    S.aiActive[i]=false;
+    if(!r.inp){a.push(idleInput(S.players[i]));continue;}
+    const stale=age>700;
+    a.push({...r.inp,fire:stale?false:r.inp.fire,revive:stale?false:r.inp.revive});
+  }
   return a;
 }
 
@@ -502,7 +538,7 @@ function spawnWaveMonster(){
   let type='reef';
   const r=Math.random();
   if(t>40&&r>.82)type='brute'; else if(t>22&&r>.58)type='spitter';
-  const p=S.players[Math.floor(Math.random()*2)]||S.players[0];
+  const p=S.players[Math.floor(Math.random()*S.players.length)]||S.players[0];
   let x,z,tries=0;
   do{const a=Math.random()*6.28,rad=26+Math.random()*16;
      x=clamp(p.x+Math.cos(a)*rad,-ARENA+5,ARENA-5);
@@ -588,7 +624,8 @@ function buy(playerId,itemId){
 }
 function summonBoss(early){
   // 在队伍附近浮出，保证登场瞬间就在镜头内
-  const cx=(S.players[0].x+S.players[1].x)/2,cz=(S.players[0].z+S.players[1].z)/2;
+  let cx=0,cz=0;for(const p of S.players){cx+=p.x;cz+=p.z;}
+  cx/=S.players.length;cz/=S.players.length;
   const bx=clamp(cx+(Math.random()-.5)*9,-ARENA+7,ARENA-7);
   const bz=clamp(cz+12,-ARENA+7,ARENA-7);
   S.boss={id:S.nextId++,x:bx,z:bz,vx:0,vz:0,angle:0,hp:early?1250:1500,maxHp:early?1250:1500,
@@ -699,7 +736,7 @@ function updatePOIs(dt,inputs){
 }
 function startRandomEvent(){
   const type=EVENT_KEYS[Math.floor(Math.random()*EVENT_KEYS.length)];
-  const p=S.players[Math.floor(Math.random()*2)]||S.players[0];
+  const p=S.players[Math.floor(Math.random()*S.players.length)]||S.players[0];
   const a=Math.random()*6.28,rad=24+Math.random()*22;
   const x=clamp(p.x+Math.cos(a)*rad,-ARENA+14,ARENA-14);
   const z=clamp(p.z+Math.sin(a)*rad,-ARENA+14,ARENA-14);
@@ -742,7 +779,7 @@ function updateEvent(dt){
     e.strike+=dt;
     if(e.strike>2.0){
       e.strike=0;
-      const tp=S.players[Math.floor(Math.random()*2)]||S.players[0];
+      const tp=S.players[Math.floor(Math.random()*S.players.length)]||S.players[0];
       const sx=clamp(tp.x+(Math.random()-.5)*18,-ARENA+5,ARENA-5);
       const sz=clamp(tp.z+(Math.random()-.5)*18,-ARENA+5,ARENA-5);
       S.events.push({t:'strike',x:sx,z:sz,r:5.5,type:e.type});
@@ -774,23 +811,26 @@ function simulateHost(dt){
   S.tick++;S.gameTime+=dt;
   S.wave=1+Math.floor(S.gameTime/24);
   const inputs=hostInputs();
-  S.acks[0]=S.tick;
-  S.acks[1]=S.clients[1]&&S.remoteInput?S.remoteInput.tick:0;
+  for(let i=0;i<S.players.length;i++)
+    S.acks[i]=i===0?S.tick:(S.remoteInputs[i]?.tick||0);
   for(const p of S.players){
     const shot=stepPlayerMotion(p,inputs[p.id],dt);
     if(shot)spawnBullets(p,shot);
   }
-  // 救援
+  // 救援：任意未倒地队友靠近并按住 E 都可扶起
   for(const p of S.players){
     if(!p.downed)continue;
-    const q=S.players[1-p.id];
-    const near=!q.downed&&!q.dead&&inputs[q.id].revive&&hypot(q.x-p.x,q.z-p.z)<3.8;
+    let near=false;
+    for(const q of S.players){
+      if(q===p||q.downed||q.dead)continue;
+      if(inputs[q.id]&&inputs[q.id].revive&&hypot(q.x-p.x,q.z-p.z)<3.8){near=true;break;}
+    }
     p.revive=clamp(p.revive+(near?dt:-dt*.7),0,2.5);
     if(p.revive>=2.5){p.downed=false;p.revive=0;p.hearts=Math.min(p.maxHearts,2);p.invuln=1.5;
       S.events.push({t:'revive',id:p.id,x:p.x,z:p.z});}
   }
   const down=S.players.filter(p=>p.downed).length;
-  S.bothDown=down===2?S.bothDown+dt:0;
+  S.bothDown=down===S.players.length?S.bothDown+dt:0;
   if(S.bothDown>3){S.phase='defeat';S.events.push({t:'defeat'});}
 
   // 探索 / 隐藏点 / 拾取 / 增益 / 随机事件
@@ -913,6 +953,7 @@ function makeSnapshot(){
     worldSeed:S.worldSeed,explored:S.explored,exploreCount:S.exploreCount,
     ports:S.ports,pois:S.pois,pickups:S.pickups,event:S.event,eventTimer:S.eventTimer,
     runes:S.runes,revealT:S.revealT,
+    seats:S.seats,aiActive:S.aiActive,members:S.members,hostUid:S.hostUid,
     acks:[...S.acks],events:S.pendingEvents.splice(0),rtt:NET.rtt
   };
 }
@@ -953,32 +994,81 @@ function applySnapshot(snap){
 function delayed(fn,ms){ if(ms<=0)fn(); else setTimeout(fn,ms); }
 
 /* ------------------------------ 消息路由 --------------------------------- */
+function broadcastRoom(){
+  netSend({type:'room',members:NET.members,host:NET.uid,
+    phase:NET.role==='host'?S.phase:NET.roomPhase});
+}
 function onNetMessage(m){
   if(m.room!==NET.room)return;
   if(NET.role==='host'){
     if(m.type==='hello'){
-      S.clients[1]=true;NET.connected=true;
-      netSend({type:'welcome',tick:S.tick,id:1,to:m.from,seed:20261107});
-      toast('队友已加入 · AI 接管结束','hot');
+      let mem=NET.members.find(x=>x.uid===m.from);
+      if(!mem){
+        const taken=NET.members.filter(x=>!x.spectator&&x.seat>=0).map(x=>x.seat);
+        let seat=-1;
+        for(let i=0;i<MAX_SEATS;i++)if(!taken.includes(i)){seat=i;break;}
+        const spectator=S.phase!=='lobby'||seat<0||NET.members.length>=MAX_ROOM;
+        mem={uid:m.from,name:String(m.name||'玩家').slice(0,16),
+          seat:spectator?-1:seat,spectator};
+        NET.members.push(mem);
+        toast(mem.name+' 加入房间'+(spectator?' · 观战':''),'hot');
+      }
+      S.members=NET.members;
+      netSend({type:'welcome',to:m.from,id:mem.seat,spectator:mem.spectator,
+        host:NET.uid,members:NET.members,phase:S.phase,tick:S.tick,
+        worldSeed:S.worldSeed,seats:S.seats,n:S.players.length});
+      broadcastRoom();renderWait();
+      // 开局后加入的人直接进观战
+      if(S.phase==='playing')netSend({type:'start',worldSeed:S.worldSeed,
+        seats:S.seats,n:S.players.length,members:S.members,phase:'playing'});
+    }else if(m.type==='bye'){
+      NET.members=NET.members.filter(x=>x.uid!==m.from);
+      S.members=NET.members;broadcastRoom();renderWait();
     }else if(m.type==='input'){
-      if(!m.tick||m.tick>=(S.remoteInput?.tick||0)){S.remoteInput={tick:m.tick,...m.inp};S.remoteInputAt=performance.now();}
+      const seat=S.seats.indexOf(m.from);
+      if(seat>0&&(!m.tick||m.tick>=(S.remoteInputs[seat]?.tick||0)))
+        S.remoteInputs[seat]={tick:m.tick,inp:m.inp,at:performance.now()};
     }else if(m.type==='cmd'){
-      if(m.cmd==='buy')buy(1,m.item);
-      else if(m.cmd==='reset')resetGame();
+      const seat=S.seats.indexOf(m.from);
+      if(m.cmd==='buy'&&seat>=0)buy(seat,m.item);
+      else if(m.cmd==='reset'&&(m.from===NET.uid||seat>=0))resetGame();
+      else if(m.cmd==='lobby'&&(m.from===NET.uid||seat>=0))backToLobby();
       else if(m.cmd==='fast')S.gameTime=Math.min(BOSS_TIME-.1,S.gameTime+m.val);
-    }else if(m.type==='pong'){ NET.rtt=Math.round(performance.now()-m.t); }
+    }else if(m.type==='pong'){NET.rtt=Math.round(performance.now()-m.t);}
   }else if(NET.role==='client'){
     if(m.type==='welcome'){
       if(m.to&&m.to!==NET.uid)return;
-      NET.clientId=m.id??1;NET.clientTick=(m.tick||0)+6;NET.connected=true;
-      NET.pred={x:6,z:8,vx:0,vz:0,aim:0,fireCd:0,weapon:'pistol',recoilMul:1,
-        pierce:0,downed:false,invuln:0};
-      startGame();
-      toast('已连接主机 · 你是 2P 蓝队','hot');
+      NET.clientId=m.id??-1;NET.spectator=!!m.spectator;
+      NET.connected=true;NET.hostUid=m.host;NET.members=m.members||[];
+      NET.roomPhase=m.phase||'lobby';
+      if(m.worldSeed!=null&&m.worldSeed!==NET.worldSeed){
+        NET.worldSeed=m.worldSeed;buildWorld(m.worldSeed);
+      }
+      NET.clientTick=(m.tick||0)+6;
+      NET.pred=NET.spectator?null:{x:6,z:8,vx:0,vz:0,aim:0,fireCd:0,weapon:'pistol',
+        recoilMul:1,pierce:0,downed:false,invuln:0,thrust:1,curX:0,curZ:0,warpCd:0};
+      $('btnJoin').textContent='加入房间 · 另一台设备';
+      renderWait();
+      toast(NET.spectator?'👀 已加入房间 · 观战席位':'已加入房间 · '+(NET.clientId+1)+'P','hot');
+    }else if(m.type==='room'){
+      NET.members=m.members||[];NET.hostUid=m.host||NET.hostUid;
+      NET.roomPhase=m.phase||'lobby';renderWait();
+    }else if(m.type==='start'||m.type==='reset'){
+      startGame(m);
+    }else if(m.type==='lobby'){
+      NET.members=m.members||[];NET.hostUid=m.host||NET.hostUid;
+      NET.roomPhase='lobby';S=makeState();
+      $('end').classList.add('hidden');$('wait').classList.remove('hidden');
+      renderWait();toast('已返回候船厅','hot');
+    }else if(m.type==='bye'){
+      if(m.from===NET.hostUid){
+        toast('房主已离开房间','hot');leaveRoom();
+      }else{
+        NET.members=NET.members.filter(x=>x.uid!==m.from);renderWait();
+      }
     }else if(m.type==='snap'){
       delayed(()=>applySnapshot(m),NET.latency/2);
-    }else if(m.type==='reset'){ resetGame(); }
-    else if(m.type==='ping'){ netSend({type:'pong',t:m.t}); }
+    }else if(m.type==='ping'){netSend({type:'pong',t:m.t});}
   }
 }
 
@@ -1661,8 +1751,14 @@ function makePlayerMesh(id){
   g.scale.setScalar(1.18);
   return g;
 }
-const playerMeshes=[makePlayerMesh(0),makePlayerMesh(1)];
-playerMeshes.forEach(m=>scene.add(m));
+const playerMeshes=[];
+function ensurePlayerMeshes(n){
+  while(playerMeshes.length<n){
+    const i=playerMeshes.length,g=makePlayerMesh(i);scene.add(g);playerMeshes.push(g);
+  }
+  for(let i=0;i<playerMeshes.length;i++)playerMeshes[i].visible=i<n;
+}
+ensurePlayerMeshes(2);
 
 // 怪物
 function makeMonsterMesh(type){
@@ -1986,10 +2082,10 @@ function handleEvents(events){
       case 'hit': spawnParticles(e.x,e.z,e.color||0xffd08a,4,3.5,.5);break;
       case 'kill': spawnParticles(e.x,e.z,0xffd277,14,6,.5);spawnFlash(e.x,e.z,0xffd277,2.6);sfx('kill');break;
       case 'hurt': spawnParticles(e.x,e.z,0xff5d6b,12,5,.8);shake=Math.max(shake,.5);sfx('hurt');
-        toast((e.id===0?'橙队':'蓝队')+'受伤！','hot');break;
-      case 'down': spawnParticles(e.x,e.z,0xff4d5e,22,7,1);toast('⚠ '+(e.id===0?'橙队':'蓝队')+'倒地！快去救！','hot');sfx('down');break;
+        toast(teamName(e.id)+'受伤！','hot');break;
+      case 'down': spawnParticles(e.x,e.z,0xff4d5e,22,7,1);toast('⚠ '+teamName(e.id)+'倒地！快去救！','hot');sfx('down');break;
       case 'revive': spawnParticles(e.x,e.z,0x8ce8b0,20,6,1);toast('💛 队友已救起！','hot');sfx('buy');break;
-      case 'buy': toast('🛒 '+(e.id===0?'橙队':'蓝队')+'买到了「'+e.name+'」','hot');sfx('buy');break;
+      case 'buy': toast('🛒 '+teamName(e.id)+'买到了「'+e.name+'」','hot');sfx('buy');break;
       case 'buyFail': {
         const mine=NET.role==='client'?NET.clientId:0;
         if(e.id===mine){toast('🛒 '+e.msg,'hot');sfx('hurt');}
@@ -2087,8 +2183,10 @@ function viewState(){
   return S;
 }
 function syncEntities(V,dt,now){
-  // 玩家
-  for(let i=0;i<2;i++){
+  // 玩家（席位数量随房间人数变化）
+  const np=(V.players||[]).length;
+  ensurePlayerMeshes(np);
+  for(let i=0;i<np;i++){
     const g=playerMeshes[i];
     let x,z,aim,vx,vz,downed,revive,weapon;
     if(NET.role==='client'&&i===NET.clientId&&NET.pred){
@@ -2223,6 +2321,8 @@ function updateParticles(dt){
   }
 }
 function myView(V){
+  if(NET.role==='client'&&NET.spectator)
+    return (V.players&&V.players[0])||{x:0,z:0};
   const id=NET.role==='client'?NET.clientId:0;
   const p=(V.players&&V.players[id])||{x:0,z:0};
   if(NET.role==='client'&&NET.pred)return {...p,x:NET.pred.x,z:NET.pred.z,vx:NET.pred.vx,vz:NET.pred.vz};
@@ -2230,11 +2330,11 @@ function myView(V){
 }
 let camFocus=new THREE.Vector3(0,0,0);
 function updateCamera(V,dt){
-  const me=myView(V);
-  const mate=V.players[NET.role==='client'?1-NET.clientId:1]||me;
-  const cx=(me.x+mate.x)/2,cz=(me.z+mate.z)/2;
-  const gap=hypot(me.x-mate.x,me.z-mate.z);
-  // 默认把两条船一起框在画面中央；拉开太远时才逐渐偏向自己
+  const me=myView(V),list=V.players||[];
+  let sx=0,sz=0,gap=0;
+  for(const p of list){sx+=p.x;sz+=p.z;gap=Math.max(gap,hypot(p.x-me.x,p.z-me.z));}
+  const n=list.length||1,cx=sx/n,cz=sz/n;
+  // 默认把所有船一起框住；拉开太远时才逐渐偏向自己
   const bias=clamp((gap-18)/30,0,.45);
   let tx=lerp(cx,me.x,bias),tz=lerp(cz,me.z,bias);
   // 首领登场时把镜头拉开并一起框住巨兽，避免它躲进 HUD 面板后面
@@ -2263,6 +2363,12 @@ function showEventBanner(name,desc,color){
   bannerUntil=performance.now()+6500;
 }
 function hideEventBanner(){$('eventBanner').style.display='none';bannerUntil=0;}
+function seatLabel(V,i){
+  if(V.aiActive&&V.aiActive[i])return 'AI';
+  if(NET.role==='client')return i===NET.clientId?'你':(i===0?'主机':'联机');
+  if(NET.role==='host')return i===0?'主机':'联机';
+  return i===0?'你':'AI';
+}
 function compass(dx,dz){
   const a=((Math.atan2(dx,-dz)*180/Math.PI)+360)%360;
   return ['北','东北','东','东南','南','西南','西','西北'][Math.round(a/45)%8];
@@ -2318,17 +2424,18 @@ function updateHUD(V,now){
     <div class="pcard">
       <div class="avatar" style="color:${PHEX[i]}">🦫</div>
       <div class="pinfo">
-        <div class="pname"><span style="color:${PHEX[i]}">${i===0?'1P 橙队':'2P 蓝队'}</span>
-          <span>${NET.role==='client'?(i===NET.clientId?'你':'主机'):(NET.role==='host'?(i===0?'主机':(NET.connected?'联机':'AI')):(i===0?'你':'AI'))}</span></div>
+        <div class="pname"><span style="color:${PHEX[i]}">${(i+1)+'P '+teamName(i)}</span>
+          <span>${seatLabel(V,i)}</span></div>
         <div class="hearts">${heartHtml(p)}</div>
         <div class="wp ${p.downed?'downed':''}">${p.downed?'✖ 倒地 · 等待救援 '+Math.round((p.revive||0)/2.5*100)+'%':(WEAPONS[p.weapon]||WEAPONS.pistol).name+' · 伤害×'+(p.dmgMul||1).toFixed(2)+' · 推力×'+(p.recoilMul||1).toFixed(2)}</div>
       </div>
     </div>`).join('');
   // 提示
-  const me=myView(V);
-  const mate=V.players[NET.role==='client'?1-NET.clientId:1]||{};
+  const me=myView(V),myId=NET.role==='client'?NET.clientId:0;
+  const mate=(V.players||[]).find(p=>p.id!==myId&&p.downed)||{};
   const pr=$('prompt');
-  if(mate.downed){
+  if(NET.spectator){pr.style.display='block';pr.textContent='👀 观战中 · 跟随 1P 视角，不参与操控';}
+  else if(mate.downed){
     const d=hypot((me.x||0)-(mate.x||0),(me.z||0)-(mate.z||0));
     pr.style.display='block';
     pr.textContent=d<3.8?`按住 E 救起队友 · ${Math.round((mate.revive||0)/2.5*100)}%`:`队友倒地！距离 ${d.toFixed(0)}m · 朝反方向开火冲过去`;
@@ -2353,15 +2460,16 @@ function updateHUD(V,now){
   // 靠近商船时给一个可直接点击的入口
   const ob=$('openShop');
   const md=V.merchant?hypot((me.x||0)-V.merchant.x,(me.z||0)-V.merchant.z):999;
-  ob.style.display=(V.merchant&&V.merchant.active&&!shopOpen&&md<=SHOP_RANGE&&!mate.downed)
-    ?'inline-block':'none';
+  ob.style.display=(V.merchant&&V.merchant.active&&!shopOpen&&md<=SHOP_RANGE&&
+    !mate.downed&&!NET.spectator)?'inline-block':'none';
   // 商店：离港自动关闭并提示，避免面板开着却点不动
   if(shopOpen){
     if(!V.merchant||!V.merchant.active){closeShop();toast('⛵ 商船离港，补给站关闭','hot');}
     else renderShop(V);
   }
   // 网络面板
-  $('roleTag').textContent=NET.role==='host'?'HOST · 权威服务器':NET.role==='client'?'CLIENT · 预测 + 和解':'SOLO · AI 队友';
+  $('roleTag').textContent=NET.spectator?'SPECTATOR · 观战':
+    NET.role==='host'?'HOST · 权威服务器':NET.role==='client'?'CLIENT · 预测 + 和解':'SOLO · AI 队友';
   $('nTick').textContent=NET.role==='client'?NET.clientTick:(V.tick||0);
   $('nSnap').textContent=NET.snapRate.toFixed(0)+' Hz';
   $('nRtt').textContent=NET.rtt+' ms';
@@ -2499,7 +2607,7 @@ function closeShop(){
   shopOpen=false;shopSig='';$('shop').style.display='none';
 }
 function requestBuy(itemId){
-  if(!shopOpen)return;
+  if(!shopOpen||NET.spectator)return;
   const V=viewState(),it=SHOP.find(i=>i.id===itemId);
   if(!it)return;
   if(!V.merchant||!V.merchant.active){toast('⛵ 商船已离港，等下一班吧','hot');closeShop();return;}
@@ -2514,6 +2622,7 @@ function requestBuy(itemId){
   shopSig=''; // 让列表立刻刷新（主机端即时，客户端等快照）
 }
 function toggleShop(){
+  if(NET.spectator){toast('观战状态下不能交易');return;}
   const V=viewState();
   if(shopOpen){closeShop();return;}
   if(!V.merchant||!V.merchant.active){toast('⛵ 商船还没靠港','hot');return;}
@@ -2553,7 +2662,13 @@ function frame(now){
   if(now-NET.rateAt>1000){NET.snapRate=NET.snapCount*1000/(now-NET.rateAt);NET.snapCount=0;NET.rateAt=now;}
   renderer.render(scene,camera);
 }
+let lobbyBeat=0;
 function fixedStep(now){
+  // 候船厅：不跑模拟，只周期性广播成员名单
+  if(NET.role==='host'&&S.phase==='lobby'){
+    if(++lobbyBeat%30===0)broadcastRoom();
+    return;
+  }
   const sim=(NET.role==='host'||NET.role==='solo')&&S.phase!=='lobby';
   if(sim){
     simulateHost(STEP);
@@ -2561,6 +2676,8 @@ function fixedStep(now){
     if(tickCount%SNAP_TICKS===0)sendSnapshot();
     if(tickCount%60===0&&NET.role==='host')netSend({type:'ping',t:performance.now()});
   }else if(NET.role==='client'){
+    if(NET.connected&&NET.spectator){NET.clientTick++;return;}
+    if(NET.connected&&NET.roomPhase!=='playing')return;
     if(NET.connected){
       const inp=readInput();
       NET.clientTick++;
@@ -2575,41 +2692,117 @@ function fixedStep(now){
           sfx(NET.pred.weapon==='cannon'?'boom':NET.pred.weapon==='shotgun'?'shot2':'shot');
         }
       }
-      const msg={type:'input',tick:NET.clientTick,inp};
-      delayed(()=>netSend(msg),NET.latency/2);
+      // 输入直发：后台标签页里 setTimeout 会被节流，延迟上行会丢输入。
+      // 模拟延迟只施加在下行快照上，预测/和解效果依然成立。
+      netSend({type:'input',tick:NET.clientTick,inp});
     }
   }
 }
 
 /* ------------------------------ 生命周期 --------------------------------- */
-function resetGame(){
-  const fresh=NET.role!=='client';
-  S=makeState();
-  S.clients[1]=NET.role==='host'?NET.connected:true;
-  if(NET.role==='solo')S.clients[1]=false;
-  S.phase='playing';
-  if(fresh){NET.worldSeed=S.worldSeed;buildWorld(S.worldSeed);initRun(S);}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,
+  c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function renderWait(){
+  $('waitRoom').textContent=NET.room;
+  const list=NET.members||[],players=list.filter(m=>!m.spectator).length;
+  $('waitCount').textContent=list.length+' 人在线 · '+players+' 条船';
+  $('waitList').innerHTML=list.map(m=>{
+    const col=m.seat>=0&&m.seat<PHEX.length?PHEX[m.seat]:'#9fb0b8';
+    const tag=m.uid===NET.hostUid?'房主 · ':'';
+    const role=m.spectator?'观战':(m.seat+1)+'P '+teamName(m.seat);
+    return `<div class="member"><span class="dot" style="background:${col};color:${col}"></span>
+      <b>${escapeHtml(m.name)}</b><span>${tag}${role}</span></div>`;
+  }).join('');
+  $('btnStartRoom').style.display=NET.role==='host'?'inline-block':'none';
+  $('waitHint').textContent=NET.role==='host'
+    ?`房间可容纳 ${MAX_ROOM} 人、同场最多 ${MAX_SEATS} 条船；空位由 AI 补上，超出的连接自动观战。等人齐后点「开始游戏」。`
+    :'等待房主开始游戏…（船位满了会作为观战加入，依然能看完整局）';
+}
+function clearTransient(){
   NET.pred=null;NET.prevSnap=null;NET.lastSnap=null;NET.inputHistory.clear();NET.predErr=0;
   for(const [id,g] of monsterMeshes){scene.remove(g);}monsterMeshes.clear();
   for(const [id,g] of bulletMeshes){scene.remove(g);}bulletMeshes.clear();
   for(const [id,g] of poiMeshes){scene.remove(g);}poiMeshes.clear();
   for(const [id,g] of pickupMeshes){scene.remove(g);}pickupMeshes.clear();
-  playerMeshes[0].position.set(-8,0,8);playerMeshes[1].position.set(8,0,8);
   camFocus.set(0,0,0);
   shopOpen=false;shopSig='';$('shop').style.display='none';
   $('end').classList.add('hidden');lastPhase='playing';
-  if(NET.role==='host')netSend({type:'reset'});
-  toast('新的一局开始！');
 }
-function startGame(){
-  if(NET.role!=='client'){
-    S=makeState();S.phase='playing';S.clients[1]=NET.role==='solo'?false:NET.connected;
-    NET.worldSeed=S.worldSeed;buildWorld(S.worldSeed);initRun(S);
-    playerMeshes[0].position.set(-8,0,8);playerMeshes[1].position.set(8,0,8);
+function beginRun(){
+  const solo=NET.role==='solo';
+  S=makeState();S.phase='playing';
+  if(solo){
+    S.members=[{uid:NET.uid,name:'你',seat:0,spectator:false}];
+    S.hostUid=NET.uid;S.players=[makePlayer(0,-8,8),makePlayer(1,8,8)];
+    S.seats=[NET.uid,null];S.aiActive=[false,true];
+  }else{
+    S.members=NET.members.map(m=>({...m}));S.hostUid=NET.uid;
+    const humans=S.members.filter(m=>!m.spectator);
+    const n=clamp(humans.length,2,MAX_SEATS);
+    S.players=[];S.seats=[];S.aiActive=[];
+    for(let i=0;i<n;i++){
+      const m=humans[i];
+      S.players.push(makePlayer(i,(i-(n-1)/2)*7,8));
+      S.seats.push(m?m.uid:null);S.aiActive.push(!m);
+    }
   }
-  $('start').classList.add('hidden');
-  $('end').classList.add('hidden');lastPhase='playing';
+  S.acks=new Array(S.players.length).fill(0);
+  S.remoteInputs=S.players.map(()=>({inp:null,tick:0,at:0}));
+  NET.worldSeed=S.worldSeed;buildWorld(S.worldSeed);initRun(S);
+  ensurePlayerMeshes(S.players.length);
+  for(let i=0;i<S.players.length;i++)playerMeshes[i].position.set(S.players[i].x,0,S.players[i].z);
+  clearTransient();NET.roomPhase='playing';
+  $('start').classList.add('hidden');$('wait').classList.add('hidden');
   toast('⛵ 300m 未知航区 · 用后坐力推船，探索迷雾里的秘密','hot');
+  if(NET.role==='host')netSend({type:'start',worldSeed:S.worldSeed,seats:S.seats,
+    n:S.players.length,members:S.members,phase:'playing'});
+}
+function startGame(info){
+  if(NET.role!=='client'){beginRun();return;}
+  if(info&&info.worldSeed!=null){NET.worldSeed=info.worldSeed;buildWorld(info.worldSeed);}
+  S=makeState();S.phase='playing';
+  const n=(info&&info.n)||2;
+  S.players=Array.from({length:n},(_,i)=>makePlayer(i,0,0));
+  S.seats=(info&&info.seats)||[];S.members=(info&&info.members)||[];
+  ensurePlayerMeshes(n);clearTransient();NET.roomPhase='playing';
+  $('start').classList.add('hidden');$('wait').classList.add('hidden');
+  toast(NET.spectator?'👀 观战模式 · 跟随 1P 视角':'⛵ 出发！按住左键开火，用后坐力推船','hot');
+}
+function resetGame(){
+  if(NET.role==='client')return;      // 客户端等主机的 reset 消息
+  beginRun();
+  if(NET.role==='host')netSend({type:'reset',worldSeed:S.worldSeed,seats:S.seats,
+    n:S.players.length,members:S.members,phase:'playing'});
+}
+function backToLobby(){
+  S=makeState();S.phase='lobby';S.members=NET.members;S.hostUid=NET.uid;
+  NET.roomPhase='lobby';clearTransient();
+  $('end').classList.add('hidden');$('wait').classList.remove('hidden');
+  renderWait();
+  netSend({type:'lobby',members:NET.members,host:NET.uid});
+}
+function enterRoom(isHost){
+  NET.room=$('roomName').value.trim()||'capy-1';
+  NET.inRoom=true;NET.roomPhase='lobby';
+  $('start').classList.add('hidden');$('wait').classList.remove('hidden');
+  if(isHost){
+    NET.members=[{uid:NET.uid,name:($('playerName').value.trim()||'房主').slice(0,16),
+      seat:0,spectator:false}];
+    NET.hostUid=NET.uid;NET.spectator=false;NET.clientId=0;NET.connected=true;
+    S=makeState();S.phase='lobby';S.members=NET.members;S.hostUid=NET.uid;
+    broadcastRoom();
+  }else{
+    NET.members=[];NET.hostUid=null;NET.spectator=false;NET.connected=false;
+  }
+  renderWait();
+}
+function leaveRoom(){
+  if(NET.role==='host'||NET.role==='client')netSend({type:'bye'});
+  if(NET.transport){NET.transport.close();NET.transport=null;}
+  NET.inRoom=false;NET.connected=false;NET.spectator=false;NET.members=[];
+  S=makeState();NET.role='solo';
+  $('wait').classList.add('hidden');$('end').classList.add('hidden');
+  $('start').classList.remove('hidden');
 }
 function setupTransport(){
   NET.room=$('roomName').value.trim()||'capy-1';
@@ -2620,24 +2813,35 @@ function setupTransport(){
   NET.transport.onMessage(onNetMessage);
 }
 $('btnSolo').onclick=()=>{
-  NET.role='solo';NET.connected=false;NET.transport=null;startGame();
+  NET.role='solo';NET.connected=false;NET.spectator=false;NET.clientId=0;
+  NET.transport=null;NET.members=[{uid:NET.uid,name:'你',seat:0,spectator:false}];
+  startGame();
 };
 $('btnHost').onclick=()=>{
-  NET.role='host';setupTransport();startGame();
-  toast('主机已就绪 · 另一台设备打开同一网址并点「加入房间」','hot');
+  NET.role='host';setupTransport();enterRoom(true);
+  toast('房间已创建 · 把网址和房间名发给队友，等人齐后点「开始游戏」','hot');
 };
 $('btnJoin').onclick=()=>{
-  NET.role='client';NET.connected=false;setupTransport();
+  NET.role='client';setupTransport();enterRoom(false);
   $('btnJoin').textContent='正在寻找主机…';
-  netSend({type:'hello'});
+  netSend({type:'hello',name:($('playerName').value.trim()||'玩家').slice(0,16)});
   setTimeout(()=>{if(!NET.connected){
     $('btnJoin').textContent='加入房间 · 另一台设备';
-    toast('没找到主机：请先点「创建房间」，并确认两台设备房间名一致','hot');
+    toast('没找到主机：请先点「创建房间」，并确认房间名一致','hot');
   }},2500);
 };
+$('btnStartRoom').onclick=()=>{
+  if(NET.role!=='host')return;
+  beginRun();
+};
+$('btnLeaveRoom').onclick=leaveRoom;
 $('btnRestart').onclick=()=>{
   if(NET.role==='client')netSend({type:'cmd',cmd:'reset'});
   else resetGame();
+};
+$('btnBackLobby').onclick=()=>{
+  if(NET.role==='client')netSend({type:'cmd',cmd:'lobby'});
+  else backToLobby();
 };
 $('shopClose').onclick=()=>closeShop();
 $('openShop').onclick=()=>toggleShop();
