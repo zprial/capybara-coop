@@ -1,0 +1,14 @@
+services:
+  capybara-coop:
+    build: .
+    image: capybara-coop:latest
+    container_name: capybara-coop
+    ports:
+      # 若前面挂了 Nginx / Caddy 做 HTTPS 反代，可改成 "127.0.0.1:8080:8080"
+      - "8080:8080"
+    environment:
+      PORT: "8080"
+      HOST: "0.0.0.0"
+      RELAY_PATH: "/relay"
+      # MAX_FRAME: "2097152"
+    restart: unless-stopped

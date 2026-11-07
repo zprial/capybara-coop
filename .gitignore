@@ -1,0 +1,13 @@
+# 本地工作区数据与编辑器产物
+.workbuddy/
+.DS_Store
+*.log
+node_modules/
+
+# 预览工具生成的旧版页面副本；游戏本体是 capybara-coop.html，
+# 部署用副本是 capybara-coop-server/public/index.html
+/index.html
+
+# 本地运行/调试产物
+.env
+.env.local
