@@ -1,5 +1,6 @@
 services:
   capybara-coop:
+    # build context = 仓库根目录，Dockerfile 直接 COPY 根目录的 capybara-coop.html
     build: .
     image: capybara-coop:latest
     container_name: capybara-coop

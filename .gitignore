@@ -4,9 +4,8 @@
 *.log
 node_modules/
 
-# 预览工具生成的旧版页面副本；游戏本体是 capybara-coop.html，
-# 部署用副本是 capybara-coop-server/public/index.html
-/index.html
+# 唯一的游戏页面是根目录 capybara-coop.html；Dockerfile 直接 COPY 它，
+# 不再有 public/index.html 副本。
 
 # 本地运行/调试产物
 .env

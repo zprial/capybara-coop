@@ -1,0 +1,10 @@
+# 只让 Dockerfile 需要的三个文件进入 build context
+.git
+.gitignore
+.workbuddy
+node_modules
+*.log
+.DS_Store
+npm-debug.log*
+.env
+.env.local

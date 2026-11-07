@@ -2,7 +2,7 @@
 /* ============================================================================
  * Capybara Co-op · 部署服务器（零依赖，单进程）
  *
- *   · 静态托管 public/index.html，并把同域中继地址注入页面
+ *   · 静态托管仓库根目录的 capybara-coop.html（唯一来源），并把同域中继地址注入页面
  *   · /relay 提供 WebSocket 中继：把收到的 JSON 原样广播给同房间的其他连接
  *   · /healthz 健康检查
  *
@@ -26,7 +26,7 @@ const MAX_FRAME = Number(process.env.MAX_FRAME || 2 * 1024 * 1024);
 const GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
 
 /* -------------------------------- 页面注入 -------------------------------- */
-const htmlPath = path.join(ROOT, 'public', 'index.html');
+const htmlPath = path.join(ROOT, 'capybara-coop.html');
 let source = fs.readFileSync(htmlPath, 'utf8');
 const relayScript = `<script>window.__CAPY_RELAY__=(location.protocol==='https:'?'wss://':'ws://')+location.host+${JSON.stringify(RELAY_PATH)};</script>`;
 const PAGE = source.includes('<!--CAPY_RELAY_CONFIG-->')
@@ -136,7 +136,7 @@ const server = http.createServer((req, res) => {
     res.end(JSON.stringify({ ok: true, rooms: rooms.size, clients, uptime: Math.floor(process.uptime()) }));
     return;
   }
-  // 仅提供 index.html；basename 白名单杜绝目录穿越
+  // 仅返回内存中的游戏页面；basename 白名单杜绝目录穿越
   let p = u.pathname;
   if (p === '/' || p === '/capybara-coop.html') p = '/index.html';
   if (path.basename(p) !== 'index.html') {
